@@ -1,0 +1,301 @@
+@font-face {
+  font-family: 'Calculator';
+  src: url('../fonts/Calculator.eot');
+  src: local('☺'), url('../fonts/Calculator.woff') format('woff'), url('../fonts/Calculator.ttf') format('truetype'), url('../fonts/Calculator.svg') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Galaktika';
+  src: local('☺'), url('../fonts/Galaktika.woff') format('woff'), url('../fonts/Galaktika.ttf') format('truetype'), url('../fonts/Galaktika.svg') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'Galaktika';
+  font-weight: bold;
+  box-shadow: inset 1px 1px 25px 5px rgba(0, 0, 0, 0.6);
+  user-select: none;
+  color: #DFDDD9;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+input::placeholder {
+  font-family: 'Galaktika';
+  font-size: 5vh;
+  text-shadow: none;
+  color: #EBF2EA;
+}
+
+.inputs {
+  background: transparent;
+  padding: 0 2vh;
+  cursor: pointer;
+  width: 90vw;
+  font-family: 'Calculator';
+  font-size: 5vh;
+  letter-spacing: 0.5vw;
+  border-radius: 5px;
+  color: #DFDDD9;
+}
+
+button {
+  margin: 1vh;
+}
+
+select {
+  margin: 1vh;
+  padding: 2vh;
+  font-size: 3vh;
+  font-family: 'verdana';
+  cursor: pointer;
+  background: transparent;
+  width: 90vw;
+  color: #DFDDD9;
+  border-radius: 3px;
+  box-shadow: inset 0px 0px 15px 2px rgba(0, 0, 0, 0.1);
+}
+
+label {
+  font-size: 5vh;
+  padding-left: 10px;
+  padding-top: 10px;
+  color: #0000008E;
+}
+
+option {
+  font-size: 3vh;
+  background: #224E66;
+  font-family: 'verdana';
+}
+
+canvas {
+  width: 100%;
+  /* Занимает всю ширину родителя */
+  max-width: 400px;
+  /* Чтобы на огромных мониторах не стал гигантским */
+  aspect-ratio: 1 / 1;
+  /* Магия CSS: всегда держит квадрат */
+  display: block;
+  /* margin: 0px auto; */
+}
+
+.body_calc {
+  background: #224E66;
+}
+
+.body_ohms {
+  background: #3F5232;
+}
+
+.body_trans {
+  background: #524700;
+}
+
+.body_kdp {
+  background: #52273E;
+}
+
+.body_spk {
+  background: #523527;
+}
+
+.user_fill {
+  color: #aca;
+}
+
+.result_fill {
+  color: #cac;
+}
+
+.error_fill {
+  color: #e33;
+}
+
+
+
+#op1,
+#op2 {
+  font-family: 'Calculator';
+  font-size: 6vh;
+}
+
+#otvet {
+  font-size: 6vh;
+}
+
+#sbros,
+#calculate_ohm,
+#calculate_kdp,
+#calculate_trans {
+  padding: 2vh 3vh;
+  margin-top: 3vh;
+  font-family: 'Galaktika';
+  width: 25vh;
+  box-shadow: inset 0px 0px 15px 2px rgba(0, 0, 0, 0.05);
+  border-radius: 9px;
+  font-size: 5vh;
+  letter-spacing: 2px;
+}
+
+#sbros:active,
+#calculate_ohm:active,
+#calculate_kdp:active,
+#calculate_trans:active {
+  text-shadow: 1px 1px 2px #CC8193, -1px -1px 2px #CC8193;
+  box-shadow: inset 0px 0px 15px 2px rgba(0, 0, 0, 0.09);
+  transition: all 0.1s ease-out;
+}
+
+#massage {
+  color: #EBF2EA;
+  padding: 1vh;
+  margin: 1vh;
+  text-align: center;
+  letter-spacing: 3px;
+}
+
+#explanation {
+  color: #ebf2ea5a;
+  padding: 2vh;
+  margin: 2vh 4vh 0vh 4vh;
+  text-align: center;
+  letter-spacing: 3px;
+  font-family: cursive;
+  line-height: 1.5;
+  text-align: justify;
+}
+
+/* style.css */
+
+
+#nav {
+  font-family: 'Galaktika';
+  letter-spacing: 1vw;
+  text-align: center;
+  padding: 1vh;
+  font-size: 6vh;
+  text-shadow: 1px 1px 5px #CC8193A3, -1px -1px 5px #CC8193A3;
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+#nav_0,
+#nav_1,
+#nav_2,
+#nav_3,
+#nav_4 {
+  font-family: 'verdana';
+  text-shadow: none;
+  text-align: center;
+}
+
+@media screen and (orientation: landscape) {
+
+  #explanation,
+  select {
+    width: 60vw;
+    max-width: 500px;
+  }
+
+  .inputs {
+    width: 40vw;
+    max-width: 500px;
+  }
+
+  .trans::placeholder,
+  .ohm::placeholder,
+  .kdp::placeholder,
+  .spk::placeholder {
+    letter-spacing: 1px;
+    font-size: 4vh;
+  }
+
+  label {
+    margin-left: 15vw;
+    font-size: 6vh;
+  }
+
+  canvas {
+    width: 100%;
+    /* Занимает всю ширину родителя */
+    max-width: 300px;
+    /* Чтобы на огромных мониторах не стал гигантским */
+    aspect-ratio: 1 / 1;
+    /* Магия CSS: всегда держит квадрат */
+    display: block;
+    /* margin: 0px auto; */
+  }
+
+  #op1,
+  #op2,
+  #otvet,
+  #sbros,
+  #calculate_ohm,
+  #calculate_kdp,
+  #calculate_trans {
+    font-size: 6vh;
+  }
+
+  #sbros,
+  #calculate_ohm,
+  #calculate_kdp,
+  #calculate_trans {
+    width: 35vh;
+  }
+}
+
+@media screen and (orientation: portrait) {
+
+  .trans,
+  .ohm,
+  .kdp {
+    width: 50vw;
+  }
+
+  .spk {
+    width: 40vw;
+  }
+
+  .trans::placeholder,
+  .ohm::placeholder,
+  .kdp::placeholder {
+    letter-spacing: 1px;
+    font-size: 5vw;
+  }
+
+  .spk::placeholder {
+    font-size: 4vw;
+  }
+
+  #sbros,
+  #calculate_ohm,
+  #calculate_kdp,
+  #calculate_trans {
+    padding: 2vh 3vw;
+    width: 35vw;
+    font-size: 7vw;
+    letter-spacing: 2px;
+  }
+
+  #nav {
+    width: 80vw;
+    font-size: 11vw;
+  }
+}
+
+/*
+#224F66 BLUE
+#3F5232 GREEN
+#DFDDD9 WHITE
+#524700 HAKI 
+#CC8193 saddleBROWN
+
+*/

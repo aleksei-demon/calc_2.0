@@ -1,0 +1,341 @@
+
+
+// logic.js
+let inputQueue = []; // Здесь храним порядок ввода: ['voltage', 'current']
+
+function handleOnInput(id) {
+    const el = document.getElementById(id);
+    // 1. Если пользователь стер данные вручную - удаляем из очереди
+    if (el.value === '') {
+        inputQueue = inputQueue.filter(itemId => itemId !== id);
+        toggle_input_cssClass(el, false); // Снимаем покраску
+        return;
+    }
+    // 2. Если это поле уже было в очереди - удаляем старую запись, чтобы обновить её позицию
+    inputQueue = inputQueue.filter(itemId => itemId !== id);
+    // 3. Добавляем текущее поле в конец очереди (теперь оно самое "свежее")
+    inputQueue.push(id);
+    toggle_input_cssClass(el, false); // Красим как "Ввод пользователя"
+    // 4. МАГИЯ: Если введено больше 2-х параметров
+    if (inputQueue.length > 2) {
+        const oldestId = inputQueue.shift(); // Выбиваем самый старый ID
+        const oldestEl = document.getElementById(oldestId);
+        if (oldestEl) {
+            oldestEl.value = ''; // Затираем старый операнд
+            toggle_input_cssClass(oldestEl, false); // Снимаем краску
+        }
+    }
+    // 5. Если у нас есть ровно 2 операнда - считаем автоматически!
+    if (inputQueue.length === 2) {
+        runTwoFieldCalculation();
+    }
+}
+
+function runTwoFieldCalculation() {
+    // Собираем значения только из тех полей, что в очереди (user_fill)
+    const vals = {};
+    inputQueue.forEach(id => {
+        vals[id] = parseFloat(document.getElementById(id).value);
+    });
+    // Математика (сокращенная версия для примера)
+    // Здесь мы используем твою функцию расчета, которая вернет объект с результатами
+    let results;
+    if (document.body.classList.contains('body_ohms')) { results = calculateOhm(vals); }
+    if (document.body.classList.contains('body_trans')) { results = calculateTrans(vals); }
+    // Выводим результаты в пустые поля
+    if (results) {
+        Object.entries(results).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (!inputQueue.includes(id)) { // Не трогаем то, что ввел пользователь
+                el.value = parseFloat(Number(val).toFixed(3));
+                toggle_input_cssClass(el, true); // Красим как "Результат"
+            }
+        });
+    }
+}
+
+
+function oneOpCalculation(id) {
+    const el = document.getElementById(id);
+    // ПРИНУДИТЕЛЬНАЯ ЧИСТКА: Удаляем "qwerty" и лишние точки прямо в поле
+    const cleanedValue = comma_point_correct(el.value);
+    if (el.value !== cleanedValue) {
+        el.value = cleanedValue;
+    }
+    const val = parseFloat(el.value);
+
+    // Если мы на экране теста комнаты
+    if (id.includes('_test')) {
+        drawPreciseBoltGraph(); // перерисовываем график при каждом нажатии клавиши
+        return;
+    }
+
+    if (isNaN(val) || el.value === '') {
+        // Если стерли — очищаем все поля этого экрана
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.value = '';
+            toggle_input_cssClass(input, false);
+        });
+        return;
+    }
+
+    // Красим текущее поле как ввод пользователя
+    toggle_input_cssClass(el, false);
+
+    let results = null;
+    if (document.body.classList.contains('body_kdp')) { results = calculateKDP(id, val); }
+    if (document.body.classList.contains('body_spk')) { results = calculateSpeaker(id, val); }
+    //if (document.body.classList.contains('body_calc')) { runCalculator(); return; } // Обычный калькулятор
+
+    // Выводим результаты
+    if (results) {
+        Object.entries(results).forEach(([resId, resVal]) => {
+            if (resId !== id) { // Не перезаписываем то, что вводит пользователь сейчас
+                const input = document.getElementById(resId);
+                if (input) {
+                    input.value = parseFloat(Number(resVal).toFixed(1));
+                    toggle_input_cssClass(input, true); // Красим как результат
+                }
+            }
+        });
+    }
+}
+
+
+function calculateOhm(vals) {
+    const { voltage: u, current: i, Resistance: r, power: p } = vals;
+    // Ищем пару и возвращаем остальные два
+    if (u && i) return { Resistance: u / i, power: u * i };
+    if (u && r) return { current: u / r, power: (u ** 2) / r };
+    if (i && r) return { voltage: i * r, power: (i ** 2) * r };
+    if (p && u) return { current: p / u, Resistance: (u ** 2) / p };
+    if (p && i) return { voltage: p / i, Resistance: p / (i ** 2) };
+    if (p && r) return { voltage: Math.sqrt(p * r), current: Math.sqrt(p / r) };
+    return null;
+}
+
+function calculateTrans(vals) {
+    console.log('calculateTrans');
+    const { ktr_: K, loadR_: LR, anodR_: AR, } = vals;
+    // Ищем пару и возвращаем третий
+    if (K && LR) return { anodR_: (LR * (K ** 2)).toFixed(1) };
+    if (K && AR) return { loadR_: (AR / (K ** 2)).toFixed(1) };
+    if (LR && AR) return { ktr_: (Math.sqrt(AR / LR)).toFixed(1) };
+    return null;
+}
+
+function calculateSpeaker(id, val) {
+    const z = 1.618;
+    let tall, wide, depth, vol;
+    if (id === 'tall') {
+        tall = val;
+        wide = tall / z;
+        depth = wide / z;
+    } else if (id === 'wide') {
+        wide = val;
+        tall = wide * z;
+        depth = wide / z;
+    } else if (id === 'depth') {
+        depth = val;
+        wide = depth * z;
+        tall = wide * z;
+    } else if (id === 'vol') {
+        // Расчет сторон из объема (л -> см³)
+        // V = h * w * d => V = (d*z*z) * (d*z) * d = d³ * z³
+        depth = Math.pow((val * 1000) / Math.pow(z, 3), 1 / 3);
+        wide = depth * z;
+        tall = wide * z;
+    }
+    vol = (tall * wide * depth) / 1000; // литры
+    return { tall, wide, depth, vol };
+}
+
+// счёт комнаты для прослушивания
+function calculateKDP(id, val) {
+    const z = 1.618;
+    let height, width, length, square;
+    if (id === 'height') {
+        height = val;// высота
+        width = height * z;// ширина = высота * 1.62
+        length = width * z;// длина = ширина * 1.62
+    } else if (id === 'width') {
+        width = val;// ширина
+        height = width / z;// высота = ширина 
+        length = width * z;// длина = ширина * 1.62
+    } else if (id === 'length') {
+        length = val;// длина
+        width = length / z;// ширина = длина / 1.62
+        height = width / z;// высота = ширина / 1.62
+    } else if (id === 'square') {
+        square = val;// Расчет сторон из площади -
+        height = Math.sqrt(square / (z ** 3));
+        width = height * z;// ширина = высота * 1.62
+        length = width * z;// длина = ширина * 1.62
+    }
+    square = (width * length); // площадь
+    return { height, length, width, square };
+    //err_of_small_height();
+}
+
+//============================================
+
+
+
+function drawPreciseBoltGraph() {
+    const canvas = document.getElementById('disp');
+    if (!canvas) return;
+    syncCanvasSize(canvas);
+    const ctx = canvas.getContext('2d');
+    const cw = canvas.width;
+    const ch = canvas.height;
+    // Константы диапазона (диапазон координат на графике: 2.0)
+    const minK = 1.0;
+    const maxK = 3.0;
+    const range = maxK - minK;
+    // Адаптивные отступы
+    const padL = cw * 0.1; // отступ слева (для цифр Y)
+    const padB = ch * 0.1; // отступ снизу (для цифр X)
+    const graphW = cw - padL - 10;
+    const graphH = ch - padB - 10;
+    // ИСПРАВЛЕННЫЕ функции перевода координат
+    const toPxX = (k) => padL + ((k - minK) / range) * graphW;
+    const toPxY = (k) => (ch - padB) - ((k - minK) / range) * graphH;
+    // --- 1. ФОН ---    
+    ctx.fillStyle = "rgba(0, 0, 0, 0)";
+    ctx.fillRect(0, 0, cw, ch);
+    // --- 2. СЕТКА ---
+    ctx.strokeStyle = '#ff9900'; // оранжевый
+    ctx.lineWidth = 0.1;
+    ctx.beginPath();
+    for (let k = minK; k <= maxK; k += 0.2) {
+        // Вертикали
+        ctx.moveTo(toPxX(k), toPxY(minK));
+        ctx.lineTo(toPxX(k), toPxY(maxK));
+        // Горизонтали
+        ctx.moveTo(toPxX(minK), toPxY(k));
+        ctx.lineTo(toPxX(maxK), toPxY(k));
+    }
+    ctx.stroke();
+    // --- 3. ИСПРАВЛЕННЫЕ ТОЧНЫЕ ЗОНЫ БОЛТА (Координаты из оригинала) ---
+    const zoneColor = 'rgba(0, 255, 0, 0.4)'; // полупрозрачный зеленый
+    // Функция отрисовки одного полигона
+    const drawPoly = (pts) => {
+        ctx.fillStyle = zoneColor;
+        ctx.beginPath();
+        ctx.moveTo(toPxX(pts[0].x), toPxY(pts[0].y));
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(toPxX(pts[i].x), toPxY(pts[i].y));
+        ctx.closePath();
+        ctx.fill();
+    };
+    // 1. Левая нижняя узкая зона
+    drawPoly([{ x: 1.2, y: 1.3 }, { x: 1.31, y: 1.88 }, { x: 1.71, y: 1.88 }]);
+    // 2. Центральная зона (Золотая) — более узкая и лежит вдоль диагонали
+    drawPoly([{ x: 1.36, y: 2.11 }, { x: 1.88, y: 2.11 }, { x: 1.88, y: 2.83 }, { x: 1.52, y: 2.83 },]);
+    // 3. Правая верхняя зона (Треугольник) — смещена левее
+    drawPoly([{ x: 2.11, y: 2.31 }, { x: 2.11, y: 2.83 }, { x: 2.59, y: 2.83 }]);
+    // --- 4. ОСИ, ЦИФРЫ И МЕТКИ ---
+    ctx.strokeStyle = '#ff9900'; // оранжевый
+    ctx.fillStyle = '#ff9900';
+    ctx.lineWidth = 1;
+    ctx.font = `${Math.round(cw * 0.038)}px Courier New`; // адаптивный шрифт
+    // Ось X
+    ctx.beginPath();
+    ctx.moveTo(padL, ch - padB); ctx.lineTo(cw - 10, ch - padB);
+    ctx.stroke();
+    // Ось Y
+    ctx.beginPath();
+    ctx.moveTo(padL, ch - padB); ctx.lineTo(padL, 10);
+    ctx.stroke();
+    // Подписи делений и деления
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let k = minK; k <= maxK; k += 0.2) {
+        let val = k.toFixed(1);
+        const ptX = toPxX(k);
+        const ptY = toPxY(k);
+        // X числа и деления
+        ctx.fillRect(ptX - 1, ch - padB, 1, cw * 0.015); // деления (риски)
+        ctx.fillText(val, ptX, ch - padB + cw * 0.05);   // числа
+        // Y числа и деления
+        ctx.fillRect(padL - cw * 0.015, ptY - 1, cw * 0.015, 1); // деления (риски)
+        ctx.fillText(val, padL - cw * 0.06, ptY + 2);            // числа
+    }
+    // --- 5. ТОЧКА ПОЛЬЗОВАТЕЛЯ ---
+    const h = comma_point_correct(document.getElementById('height_test')?.value);
+    const w = comma_point_correct(document.getElementById('width_test')?.value);
+    const l = comma_point_correct(document.getElementById('length_test')?.value);
+    // const h = parseFloat(document.getElementById('height_test')?.value);
+    // const w = parseFloat(document.getElementById('width_test')?.value);
+    // const l = parseFloat(document.getElementById('length_test')?.value);
+    if (h > 0 && w > 0 && l > 0) {
+        const userK_X = w / h;
+        const userK_Y = l / h;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'red';
+        ctx.fillStyle = '#ff3300';
+        ctx.beginPath();
+        // Используем исправленные toPxX и toPxY
+        ctx.arc(toPxX(userK_X), toPxY(userK_Y), cw * 0.018, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
+
+function syncCanvasSize(canvas) {
+    // Получаем реальную ширину, которую выделил браузер (через CSS)
+    const rect = canvas.getBoundingClientRect();
+
+    // Приравниваем внутреннее разрешение к экранному
+    // Теперь 1 пиксель кода = 1 пиксель экрана. Ноль размытия!
+    canvas.width = rect.width;
+    canvas.height = rect.width; // Раз он квадратный
+}
+//============================================
+
+
+//---------------------------
+// function Calculator() {
+//     document.querySelector('#otvet').placeholder = 'Ответ';
+//     let err_count = 0;
+//     let otv = 0;
+//     if () { }
+//     if () { }
+    // switch (dey.value) {
+    //     case dey_labels[0]: otv = +op1.value + +op2.value; break;
+    //     case dey_labels[1]: otv = +op1.value - +op2.value; break;
+    //     case dey_labels[2]: otv = +op1.value * +op2.value; break;
+    //     case dey_labels[3]: otv = +op1.value / +op2.value; break;
+    //     case dey_labels[4]: otv = (+op1.value) ** (+op2.value); break;
+    //     case dey_labels[5]: otv = (+op1.value) ** (1 / (+op2.value)); break;
+    //     case dey_labels[6]: otv = +op1.value % +op2.value; break;
+    //     case dey_labels[7]: otv = factorial(+op1.value); break;
+    //     case dey_labels[8]: otv = Math.sin(+op1.value); break;
+    //     case dey_labels[9]: otv = Math.cos(+op1.value); break;
+    //     case dey_labels[10]: otv = Math.log(+op1.value) / Math.log(+op2.value); break;
+    // }
+//     function factorial(n) {
+//         err_count++;
+//         if (err_count < 999) {
+//             if (n == 0) { return 1 }
+//             return n ? n * factorial(n - 1) : 1;
+//         } else { return }
+//     }
+//     console.log(otv);
+//     if (otv == Infinity) { otvet.placeholder = 'Безконечность'; otv = ''; otvet.value = otv; return }
+//     if (otv == -Infinity) { otvet.placeholder = '-Безконечность'; otv = ''; otvet.value = otv; return }
+//     if (isNaN(otv)) { otv = ''; otvet.value = otv; return }
+
+//     otvet.value = +(otv.toFixed(12));
+// }
+
+
+
+
+
+
+
+
+
+

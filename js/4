@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Счёт. маш. 2.0</title>
+	<!-- <link rel="stylesheet" href="css/null.css">
+	<link rel="stylesheet" href="css/style.css"> -->
+</head>
+
+<body class="body_calc"><header id="header"><form id="form2"><select id="nav" class="select" style="display: flex;"><option class="body_calc" value="ЧИСЛОБОГ" selected="selected">&nbsp;ЧИСЛОБОГ</option><option class="body_calc" value="закон Ома">&nbsp;закон Ома</option><option class="body_calc" value="Т. В. З.">&nbsp;&nbsp;Т. В. З.</option><option class="body_calc" value="К. Д. П.">&nbsp;&nbsp;К. Д. П.</option><option class="body_calc" value="Корпус А.С.">&nbsp;Корпус А.С.</option></select></form></header><main id="app_content"><form id="form"><input id="op1" class="inputs user_fill" inputmode="decimal" placeholder=" A"><select id="dey" class="select" style="">
+            <option value="+" selected="" class="body_calc">&nbsp;&nbsp;+</option>
+            <option value="-" class="body_calc">&nbsp;&nbsp;-</option>
+            <option value="*" class="body_calc">&nbsp;&nbsp;*</option>
+            <option value="/" class="body_calc">&nbsp;&nbsp;/</option>
+            <option value="^" class="body_calc">^ &nbsp;&nbsp; А в степень Б</option>
+            <option value="√" class="body_calc">√ &nbsp;&nbsp; степени Б из А</option>
+            <option value="%" class="body_calc">% &nbsp;&nbsp; остаток от А/Б </option>
+            <option value="A!" class="body_calc">А! &nbsp;&nbsp; факториал</option>
+            <option value="sin" class="body_calc">sin &nbsp;&nbsp;А</option>
+            <option value="cos" class="body_calc">cos &nbsp;&nbsp;А</option>
+            <option value="log" class="body_calc">log &nbsp;&nbsp; логарифм А по осн. Б</option>
+        </select><input id="op2" class="inputs user_fill" inputmode="decimal" placeholder=" Б"><input id="otvet" class="inputs user_fill" inputmode="decimal" placeholder=" ответ" readonly="readonly"><div class="btn-container"><button id="sbros" class="inputs">С Б Р О С</button></div><p id="explanation">Даблклик на поле ввода даст число π, следующий число е, а третий 1/2π <br><br><br> Клик на поле "Ответ" скопирует его в буфер обмена</p></form></main></body>
+
+</html>
