@@ -131,6 +131,7 @@ canvas {
   font-size: 6vh;
 }
 
+.sbros,
 #sbros,
 #calculate_ohm,
 #calculate_kdp,
@@ -145,6 +146,7 @@ canvas {
   letter-spacing: 2px;
 }
 
+.sbros:active,
 #sbros:active,
 #calculate_ohm:active,
 #calculate_kdp:active,
@@ -162,7 +164,7 @@ canvas {
   letter-spacing: 3px;
 }
 
-#explanation {
+.explanation {
   color: #ebf2ea5a;
   padding: 2vh;
   margin: 2vh 4vh 0vh 4vh;
@@ -210,9 +212,9 @@ canvas {
     max-width: 500px;
   }
 
-  .trans::placeholder,
+  .TVZ::placeholder,
   .ohm::placeholder,
-  .kdp::placeholder,
+  .KDP::placeholder,
   .spk::placeholder {
     letter-spacing: 1px;
     font-size: 4vh;
@@ -238,6 +240,7 @@ canvas {
   #op2,
   #otvet,
   #sbros,
+  .sbros,
   #calculate_ohm,
   #calculate_kdp,
   #calculate_trans {
@@ -245,6 +248,7 @@ canvas {
   }
 
   #sbros,
+  .sbros,
   #calculate_ohm,
   #calculate_kdp,
   #calculate_trans {
@@ -254,19 +258,21 @@ canvas {
 
 @media screen and (orientation: portrait) {
 
-  .trans,
+  .TVZ,
   .ohm,
-  .kdp {
+  .KDP {
     width: 50vw;
   }
+
+
 
   .spk {
     width: 40vw;
   }
 
-  .trans::placeholder,
+  .TVZ::placeholder,
   .ohm::placeholder,
-  .kdp::placeholder {
+  .KDP::placeholder {
     letter-spacing: 1px;
     font-size: 5vw;
   }
@@ -275,6 +281,7 @@ canvas {
     font-size: 4vw;
   }
 
+  .sbros,
   #sbros,
   #calculate_ohm,
   #calculate_kdp,
