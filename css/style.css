@@ -177,19 +177,17 @@ canvas {
   letter-spacing: 3px;
 }
 
-.explanation {
+.explanation,
+p {
   color: #ebf2ea5a;
   padding: 2vh;
   margin: 2vh 4vh 0vh 4vh;
   text-align: center;
   letter-spacing: 3px;
-  font-family: cursive;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
   line-height: 1.5;
   text-align: justify;
 }
-
-/* style.css */
-
 
 #nav {
   font-family: 'Galaktika';

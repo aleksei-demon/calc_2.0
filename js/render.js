@@ -345,14 +345,6 @@ function draw_KDP(target) {
     drawPreciseBoltGraph();
 }
 
-
-
-
-
-
-
-
-
 setTimeout(function () {
     const sel = document.getElementById('nav');
     if (sel) {
@@ -361,6 +353,16 @@ setTimeout(function () {
         sel.style.display = 'flex';
     }
 }, 10);
+//-------------------------------------------------------------------
+// 3. И в самом низу — запуск приложения
+document.addEventListener('DOMContentLoaded', () => {
+    switchScreen('ЧИСЛОБОГ');
+});
 
-
+// И тут же рядом фикс для мобильного кэша (Pageshow)
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        switchScreen('ЧИСЛОБОГ');
+    }
+});
 
