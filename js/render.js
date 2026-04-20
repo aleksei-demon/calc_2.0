@@ -48,7 +48,13 @@ const fields = factory(myArray, myBlueprint);
 Синтаксис: clear('#id') или clear() для полной очистки body.
 ================================================================================
 */
-
+window.addEventListener('pageshow', (event) => {
+    // Если страница загружена из кэша или просто открыта заново
+    if (event.persisted || performance.navigation.type === 2) {
+        // Принудительно рендерим главный экран (Числобог)
+        switchScreen('ЧИСЛОБОГ');
+    }
+});
 
 // Названия разделов (теперь это просто массив данных)
 
@@ -150,15 +156,15 @@ function draw_calc(target) {
         })
     );
 
-    // Собираем форму одним деревом
+    // Собираем форму одним деревом  
     const form = h('form#form', { onsubmit: (e) => e.preventDefault() }, [
-        h('input#op1.inputs.user_fill', { placeholder: ' A', attr: { inputmode: 'decimal' }, oninput: (e) => oneOpCalculation(e.target.id) }),
+        h('input#op1.inputs.user_fill', { placeholder: ' A', attr: { inputmode: 'decimal', autocomplete: 'off' }, oninput: (e) => oneOpCalculation(e.target.id) }),
 
         // ВАЖНО: Селект создается сразу с детьми!
         h('select#dey.select', { onchange: (e) => runCalculator(e.target.id) }, options),
 
-        h('input#op2.inputs.user_fill', { placeholder: ' Б', attr: { inputmode: 'decimal' }, oninput: (e) => oneOpCalculation(e.target.id) }),
-        h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true }),
+        h('input#op2.inputs.user_fill', { placeholder: ' Б', attr: { inputmode: 'decimal', autocomplete: 'off' }, oninput: (e) => oneOpCalculation(e.target.id) }),
+        h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true, attr: { autocomplete: 'off' }, }),
 
         h('div.btn-container', {}, [
             h('button#sbros.inputs', { innerText: 'С Б Р О С', onclick: () => switchScreen('ЧИСЛОБОГ') })
