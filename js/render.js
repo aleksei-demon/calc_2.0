@@ -152,12 +152,12 @@ function draw_calc(target) {
 
     // Собираем форму одним деревом
     const form = h('form#form', { onsubmit: (e) => e.preventDefault() }, [
-        h('input#op1.inputs.user_fill', { placeholder: ' A', inputmode: 'decimal', oninput: (e) => oneOpCalculation(e.target.id) }),
+        h('input#op1.inputs.user_fill', { placeholder: ' A', attr: { inputmode: 'decimal' }, oninput: (e) => oneOpCalculation(e.target.id) }),
 
         // ВАЖНО: Селект создается сразу с детьми!
         h('select#dey.select', {}, options),
 
-        h('input#op2.inputs.user_fill', { placeholder: ' Б', inputmode: 'decimal', oninput: (e) => oneOpCalculation(e.target.id) }),
+        h('input#op2.inputs.user_fill', { placeholder: ' Б', attr: { inputmode: 'decimal' }, oninput: (e) => oneOpCalculation(e.target.id) }),
         h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true }),
 
         h('div.btn-container', {}, [
@@ -187,7 +187,7 @@ function draw_ohm(target) {
         h('input.inputs.ohm', {
             id: item.id,
             placeholder: item.hold,
-            inputmode: 'numeric',
+            attr: { inputmode: 'decimal' },
             oninput: (e) => handleOnInput(e.target.id) // Своя логика!
         })
     ]);
@@ -220,7 +220,7 @@ function draw_TVZ(target) {
         h('input.inputs.TVZ', {
             id: item.id,
             placeholder: item.hold,
-            inputmode: 'numeric',
+            attr: { inputmode: 'decimal' },
             oninput: (e) => handleOnInput(e.target.id) // Своя логика!
         })
     ]);
@@ -254,7 +254,7 @@ function draw_speaker(target) {
         h('input.inputs.spk', {
             id: item.id,
             placeholder: item.hold,
-            inputmode: 'numeric',
+            attr: { inputmode: 'decimal' },
             oninput: (e) => oneOpCalculation(e.target.id) // Своя логика!
         })
     ]);
@@ -300,7 +300,7 @@ function draw_KDP(target) {
         h('input.inputs.KDP', {
             id: item.id,
             placeholder: item.hold,
-            inputmode: 'decimal',
+            attr: { inputmode: 'decimal' },
             oninput: (e) => oneOpCalculation(e.target.id)
         })
     ]);
