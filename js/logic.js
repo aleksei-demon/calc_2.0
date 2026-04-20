@@ -69,10 +69,12 @@ function oneOpCalculation(id) {
         drawPreciseBoltGraph(); // перерисовываем график при каждом нажатии клавиши
         return;
     }
+    if (document.body.classList.contains('body_calc')) { runCalculator(); return; } // Обычный калькулятор
 
     if (isNaN(val) || el.value === '') {
         // Если стерли — очищаем все поля этого экрана
-        const inputs = document.querySelectorAll('input');
+        //const inputs = document.querySelectorAll('input');
+        const inputs = el.closest('form').querySelectorAll('input');
         inputs.forEach(input => {
             input.value = '';
             toggle_input_cssClass(input, false);
@@ -86,7 +88,6 @@ function oneOpCalculation(id) {
     let results = null;
     if (document.body.classList.contains('body_kdp')) { results = calculateKDP(id, val); }
     if (document.body.classList.contains('body_spk')) { results = calculateSpeaker(id, val); }
-    //if (document.body.classList.contains('body_calc')) { runCalculator(); return; } // Обычный калькулятор
 
     // Выводим результаты
     if (results) {
@@ -150,7 +151,6 @@ function calculateSpeaker(id, val) {
     vol = (tall * wide * depth) / 1000; // литры
     return { tall, wide, depth, vol };
 }
-
 // счёт комнаты для прослушивания
 function calculateKDP(id, val) {
     const z = 1.618;
@@ -296,39 +296,51 @@ function syncCanvasSize(canvas) {
 
 
 //---------------------------
-// function Calculator() {
-//     document.querySelector('#otvet').placeholder = 'Ответ';
-//     let err_count = 0;
-//     let otv = 0;
-//     if () { }
-//     if () { }
-    // switch (dey.value) {
-    //     case dey_labels[0]: otv = +op1.value + +op2.value; break;
-    //     case dey_labels[1]: otv = +op1.value - +op2.value; break;
-    //     case dey_labels[2]: otv = +op1.value * +op2.value; break;
-    //     case dey_labels[3]: otv = +op1.value / +op2.value; break;
-    //     case dey_labels[4]: otv = (+op1.value) ** (+op2.value); break;
-    //     case dey_labels[5]: otv = (+op1.value) ** (1 / (+op2.value)); break;
-    //     case dey_labels[6]: otv = +op1.value % +op2.value; break;
-    //     case dey_labels[7]: otv = factorial(+op1.value); break;
-    //     case dey_labels[8]: otv = Math.sin(+op1.value); break;
-    //     case dey_labels[9]: otv = Math.cos(+op1.value); break;
-    //     case dey_labels[10]: otv = Math.log(+op1.value) / Math.log(+op2.value); break;
-    // }
-//     function factorial(n) {
-//         err_count++;
-//         if (err_count < 999) {
-//             if (n == 0) { return 1 }
-//             return n ? n * factorial(n - 1) : 1;
-//         } else { return }
-//     }
-//     console.log(otv);
-//     if (otv == Infinity) { otvet.placeholder = 'Безконечность'; otv = ''; otvet.value = otv; return }
-//     if (otv == -Infinity) { otvet.placeholder = '-Безконечность'; otv = ''; otvet.value = otv; return }
-//     if (isNaN(otv)) { otv = ''; otvet.value = otv; return }
+function calculateStandard(val1, val2, operator) {
+    let result = 0;
 
-//     otvet.value = +(otv.toFixed(12));
-// }
+    // Сравниваем operator со значениями из твоего массива calc_configs
+    switch (operator) {
+        case calc_configs[0].value: result = val1 + val2; break; // '+'
+        case calc_configs[1].value: result = val1 - val2; break; // '-'
+        case calc_configs[2].value: result = val1 * val2; break; // '*'
+        case calc_configs[3].value: result = val1 / val2; break; // '/'
+        case calc_configs[4].value: result = Math.pow(val1, val2); break; // '^'
+        case calc_configs[5].value: result = Math.pow(val1, 1 / val2); break; // '√'
+        case calc_configs[6].value: result = val1 % val2; break; // '%'
+        case calc_configs[7].value: result = factorial(val1); break; // 'A!'
+        case calc_configs[8].value: result = Math.sin(val1); break; // 'sin'
+        case calc_configs[9].value: result = Math.cos(val1); break; // 'cos'
+        case calc_configs[10].value: result = Math.log(val1) / Math.log(val2); break; // 'log'
+        default: return null;
+    }
+
+    function factorial(n) {
+        if (n < 0) return NaN;
+        let res = 1;
+        for (let i = 2; i <= Math.min(n, 170); i++) res *= i;
+        return res;
+    }
+
+    return result;
+}
+
+function runCalculator() {
+    // 1. ОФИЦИАНТ СОБИРАЕТ ДАННЫЕ
+    const op1Val = parseFloat(document.getElementById('op1').value) || 0;
+    const op2Val = parseFloat(document.getElementById('op2').value) || 0;
+    const operator = document.getElementById('dey').value;
+    const otvet = document.getElementById('otvet');
+
+    // 2. ОФИЦИАНТ ПЕРЕДАЕТ ЗАКАЗ ПОВАРУ И ПОЛУЧАЕТ ОТВЕТ
+    const result = calculateStandard(op1Val, op2Val, operator);
+
+    // 3. ВЫВОД В ИНТЕРФЕЙС (с проверками)
+    if (result === Infinity) { otvet.value = ''; otvet.placeholder = 'Бесконечность'; return; }
+    if (isNaN(result) || result === null) { otvet.value = ''; return; }
+
+    otvet.value = parseFloat(result.toFixed(10));
+}
 
 
 

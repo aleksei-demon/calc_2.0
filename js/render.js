@@ -155,7 +155,7 @@ function draw_calc(target) {
         h('input#op1.inputs.user_fill', { placeholder: ' A', attr: { inputmode: 'decimal' }, oninput: (e) => oneOpCalculation(e.target.id) }),
 
         // ВАЖНО: Селект создается сразу с детьми!
-        h('select#dey.select', {}, options),
+        h('select#dey.select', { onchange: (e) => runCalculator(e.target.id) }, options),
 
         h('input#op2.inputs.user_fill', { placeholder: ' Б', attr: { inputmode: 'decimal' }, oninput: (e) => oneOpCalculation(e.target.id) }),
         h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true }),
@@ -280,13 +280,13 @@ const KDPFields = [
 const roomTestFields = [
     { id: 'height_test', label: 'высота', hold: 'введите значение' },
     { id: 'width_test', label: 'ширина', hold: 'введите значение' },
-    { id: 'length_test', label: 'длина&nbsp;', hold: ' введите значение' },
+    { id: 'length_test', label: 'длина&nbsp;', hold: 'введите значение' },
 ];
 const HelmholtzFields = [
-    { id: 'Helmholtz_V', label: 'объём&nbsp;&nbsp;&nbsp;&nbsp;', hold: '   введите значение' },
+    { id: 'Helmholtz_V', label: 'объём&nbsp;&nbsp;&nbsp;&nbsp;', hold: 'введите значение' },
     { id: 'Helmholtz_S', label: 'площадь рубы', hold: 'введите значение' },
     { id: 'Helmholtz_L', label: 'длина трубы', hold: ' введите значение' },
-    { id: 'Helmholtz_F', label: 'частота настр.', hold: ' введите значение' },
+    { id: 'Helmholtz_F', label: 'частота настр.', hold: 'введите значение' },
 ];
 function draw_KDP(target) {
     const targetEl = document.querySelector(target);
