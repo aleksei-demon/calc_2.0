@@ -150,7 +150,7 @@ canvas {
 #calculate_kdp,
 #calculate_trans {
   padding: 2vh 3vh;
-  margin-top: 3vh;
+  margin: 3vh;
   font-family: 'Galaktika';
   width: 25vh;
   box-shadow: inset 0px 0px 15px 2px rgba(0, 0, 0, 0.05);
@@ -181,7 +181,7 @@ canvas {
 p {
   color: #ebf2ea5a;
   padding: 2vh;
-  margin: 2vh 4vh 0vh 4vh;
+  /* margin: 2vh 4vh 0vh 4vh; */
   text-align: center;
   letter-spacing: 3px;
   font-family: "Comic Sans MS", "Comic Sans", cursive;
@@ -258,6 +258,7 @@ p {
     font-size: 6vh;
   }
 
+  .KDP,
   #sbros,
   .sbros,
   #calculate_ohm,
@@ -270,11 +271,13 @@ p {
 @media screen and (orientation: portrait) {
 
   .TVZ,
-  .ohm,
-  .KDP {
+  .ohm {
     width: 50vw;
   }
 
+  .KDP {
+    width: 40vw;
+  }
 
 
   .spk {

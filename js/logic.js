@@ -265,9 +265,6 @@ function drawPreciseBoltGraph() {
     const h = comma_point_correct(document.getElementById('height_test')?.value);
     const w = comma_point_correct(document.getElementById('width_test')?.value);
     const l = comma_point_correct(document.getElementById('length_test')?.value);
-    // const h = parseFloat(document.getElementById('height_test')?.value);
-    // const w = parseFloat(document.getElementById('width_test')?.value);
-    // const l = parseFloat(document.getElementById('length_test')?.value);
     if (h > 0 && w > 0 && l > 0) {
         const userK_X = w / h;
         const userK_Y = l / h;
@@ -280,13 +277,40 @@ function drawPreciseBoltGraph() {
         ctx.fill();
         ctx.shadowBlur = 0;
     }
+    // --- 6. ИНФОРМАЦИОННЫЙ ВЫВОД (F1, F2, F3 и S) ---
+    if (h > 0 && w > 0 && l > 0) {
+        // Расчет мод: v/(2h) * n
+        const f1 = (344 / (2 * h)).toFixed(0);
+        const f2 = (f1 * 2).toFixed(0);
+        const f3 = (f1 * 3).toFixed(0);
+        const area = (w * l).toFixed(0);
+
+        // Настройки шрифта: 150% от cw * 0.04 ≈ cw * 0.06
+        const fontSize = Math.round(cw * 0.06);
+        ctx.font = `bold ${fontSize}px Courier New`;
+        ctx.fillStyle = '#ff9900';
+        ctx.textAlign = 'right';
+
+        // Позиционирование: правый нижний угол, выше оси X
+        const textX = cw - 15;
+        let currentY = ch - padB - 20;
+
+        // Вывод в столбик снизу вверх
+        // Используем Unicode: ₁₂₃ для подстрочных и ² для надстрочного
+        ctx.fillText(`S=${area}m²`, textX, currentY);
+        currentY -= fontSize * 1.2; // Смещение вверх на высоту строки
+        ctx.fillText(`F₃=${f3}Hz`, textX, currentY);
+        currentY -= fontSize * 1.2;
+        ctx.fillText(`F₂=${f2}Hz`, textX, currentY);
+        currentY -= fontSize * 1.2;
+        ctx.fillText(`F₁=${f1}Hz`, textX, currentY);
+    }
 }
 
 
 function syncCanvasSize(canvas) {
     // Получаем реальную ширину, которую выделил браузер (через CSS)
     const rect = canvas.getBoundingClientRect();
-
     // Приравниваем внутреннее разрешение к экранному
     // Теперь 1 пиксель кода = 1 пиксель экрана. Ноль размытия!
     canvas.width = rect.width;

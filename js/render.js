@@ -78,8 +78,10 @@ function draw_init() {
     const options = nav_configs.map(item =>
         h('option.body_calc', {
             value: item.value,
-            //selected: item.value === startScreen, // Авто-выбор стартового экрана
-            selected: item.selected || false,
+            attr: {
+                // Теперь это принудительно запишется в HTML как <option selected="selected">
+                selected: (item.value === startScreen) ? 'selected' : null
+            },
             innerHTML: item.label,
         })
     );
@@ -143,8 +145,15 @@ const calc_configs = [
     { label: 'log &nbsp;&nbsp; логарифм А по осн. Б', value: 'log' },
 ];
 function draw_calc(target) {
-    for (all of document.querySelectorAll('option')) { all.className = 'body_calc'; }
     const targetEl = typeof target === 'string' ? document.querySelector(target) : target;
+
+    // ЗАЩИТА: если таргет не найден, выходим, чтобы не плодить ошибки в консоли
+    if (!targetEl) {
+        console.warn('Target element not found:', target);
+        return;
+    }
+    for (all of document.querySelectorAll('option')) { all.className = 'body_calc'; }
+
     targetEl.innerHTML = '';
 
     // Собираем опции
@@ -284,25 +293,25 @@ const KDPFields = [
     { id: 'square', label: 'площадь&nbsp;', hold: 'введите значение' }
 ];
 const roomTestFields = [
-    { id: 'height_test', label: 'высота', hold: 'введите значение' },
-    { id: 'width_test', label: 'ширина', hold: 'введите значение' },
-    { id: 'length_test', label: 'длина&nbsp;', hold: 'введите значение' },
+    { id: 'height_test', label: 'высота', sub: 'м.', hold: 'введите значение' },
+    { id: 'width_test', label: 'ширина', sub: 'м.', hold: 'введите значение' },
+    { id: 'length_test', label: 'длина&nbsp;', sub: 'м.', hold: 'введите значение' },
 ];
 const HelmholtzFields = [
-    { id: 'Helmholtz_V', label: 'объём&nbsp;&nbsp;&nbsp;&nbsp;', hold: 'введите значение' },
-    { id: 'Helmholtz_S', label: 'площадь рубы', hold: 'введите значение' },
-    { id: 'Helmholtz_L', label: 'длина трубы', hold: ' введите значение' },
-    { id: 'Helmholtz_F', label: 'частота настр.', hold: 'введите значение' },
+    { id: 'Helmholtz_V', label: 'объём&nbsp;', sub: 'л.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', hold: 'секции корпуса' },
+    { id: 'Helmholtz_L', label: 'глубина&nbsp;', sub: 'мм.&nbsp;', hold: 'щели порта' },
+    { id: 'Helmholtz_S', label: 'ширина&nbsp;', sub: 'мм.&nbsp;&nbsp;', hold: 'щели порта' },
+    { id: 'Helmholtz_S', label: 'высота&nbsp;', sub: 'м.&nbsp;&nbsp;&nbsp;', hold: 'щели порта' },
+    { id: 'Helmholtz_F', label: 'частота&nbsp;', sub: 'Hz&nbsp;', hold: 'настройки' },
 ];
 function draw_KDP(target) {
     const targetEl = document.querySelector(target);
     clear(target);
-
     // Меняем тему для всех опций (твой стайл)
     document.querySelectorAll('option').forEach(opt => opt.className = 'body_kdp');
-
     // 1. ЧЕРТЕЖ (Blueprint) — теперь он универсален
     const KDPBlueprint = (item) => h('label#' + item.id + '_', { innerHTML: item.label }, [
+        item.sub ? h('sub', { innerHTML: item.sub }) : null, // Саб, если есть
         h('input.inputs.KDP', {
             id: item.id,
             placeholder: item.hold,
@@ -310,17 +319,13 @@ function draw_KDP(target) {
             oninput: (e) => oneOpCalculation(e.target.id)
         })
     ]);
-
     // 2. СБОРКА К.Д.П.
     const fields = factory(KDPFields, KDPBlueprint);
-
     const kdpSection = h('form#KDP_form.form-block', { onsubmit: e => e.preventDefault() }, [
-        h('h2.explanation', {}, 'ЗОЛОТОЕ СЕЧЕНИЕ'),
+        h('h2.explanation', {}, 'ИДЕАЛЬНАЯ КОМНАТА <br> для прослушивания'),
         ...fields, // Высыпаем инпуты
         h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => e.target.closest('form').reset() }),
-        h('p.explanation', {}, 'Расчёт размеров идеальной Комнаты Для Прослушивания музыки. Достаточно ввести один любой параметр, чтобы получить результат , основанный на принципе "золотого сечения" - 1 к 1.62')
     ]);
-
     // 3. ТЕСТ РЕАЛЬНОЙ КОМНАТЫ (для примера, как добавить вторую)
     const testFieldsNodes = factory(roomTestFields, KDPBlueprint);
     const testSection = h('form#RoomTest_form.form-block', {}, [
@@ -328,18 +333,15 @@ function draw_KDP(target) {
         ...testFieldsNodes,
         h('canvas#disp', {}, []),
         h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => { e.target.closest('form').reset(); drawPreciseBoltGraph(); } }),
-        h('p.explanation', {}, 'Оценка готовых помещений на пригодность к прослушиванию музыки.<br> Попал в Зелёный - хорошо. Мимо - не годится.')
     ]);
-
     // 3. Резонатор
     const HelmholtzNodes = factory(HelmholtzFields, KDPBlueprint);
     const HelmholtzSection = h('form#Helmholtz_form.form-block', {}, [
-        h('h2.explanation', {}, 'Резонатор ГЕЛЬМГОЛЬЦА'),
+        h('h2.explanation', {}, 'Резонатор ГЕЛЬМГОЛЬЦА <br> Расчёт одной секции <br> (для подавления комнатных резонансов)'),
         ...HelmholtzNodes,
         h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => e.target.closest('form').reset() }),
-        h('p.explanation', {}, 'Здесь считаем специальное устройство-резонатор, предназначенное для отбора мощности акустических колебаний на частоте резонанса комнаты между полом и потолком. Частота этого резонанса зависит от высоты потолков. <br>Тонкая настройка резонатора может производиться изменением внутреннего объёма, помещая внутрь твердые предменты - пенопласт и т.п..')
+        h('p.explanation', {}, 'Одна секция Резонатора ГЕЛЬМГОЛЬЦА это глухой ящик который имеет одну щель, которую характеризует площадь и глубина (определяется толщиной доски) <br> Если некоторое количество секций собирают в одну батарею, то внутренние перегородки в ней необязательны.'),
     ]);
-
     // Добавляем всё в главный контейнер
     targetEl.append(testSection, kdpSection, HelmholtzSection);
     drawPreciseBoltGraph();
