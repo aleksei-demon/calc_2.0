@@ -173,7 +173,7 @@ function draw_calc(target) {
         h('select#dey.select', { onchange: (e) => runCalculator(e.target.id) }, options),
 
         h('input#op2.inputs.user_fill', { placeholder: ' Б', attr: { inputmode: 'decimal', autocomplete: 'off' }, oninput: (e) => oneOpCalculation(e.target.id) }),
-        h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true, attr: { autocomplete: 'off' }, }),
+        h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true, attr: { autocomplete: 'off' }, onclick: (e) => put_to_RAM(e.target.id) }),
 
         h('div.btn-container', {}, [
             h('button#sbros.inputs', { innerText: 'С Б Р О С', onclick: () => switchScreen('ЧИСЛОБОГ') })
@@ -287,10 +287,10 @@ function draw_speaker(target) {
 
 
 const KDPFields = [
-    { id: 'length', label: 'длина&nbsp;&nbsp;&nbsp;', hold: 'введите значение' },
-    { id: 'width', label: 'ширина&nbsp;', hold: 'введите значение' },
-    { id: 'height', label: 'высота&nbsp;', hold: 'введите значение' }, //error_fill
-    { id: 'square', label: 'площадь&nbsp;', hold: 'введите значение' }
+    { id: 'KDP_length', label: 'длина&nbsp;&nbsp;&nbsp;', hold: 'введите значение' },
+    { id: 'KDP_width', label: 'ширина&nbsp;', hold: 'введите значение' },
+    { id: 'KDP_height', label: 'высота&nbsp;', hold: 'введите значение' }, //error_fill
+    { id: 'KDP_square', label: 'площадь&nbsp;', hold: 'введите значение' }
 ];
 const roomTestFields = [
     { id: 'height_test', label: 'высота', sub: 'м.', hold: 'введите значение' },
@@ -298,16 +298,16 @@ const roomTestFields = [
     { id: 'length_test', label: 'длина&nbsp;', sub: 'м.', hold: 'введите значение' },
 ];
 const HelmholtzFields = [
-    { id: 'Helmholtz_V', label: 'объём&nbsp;', sub: 'л.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', hold: 'секции корпуса' },
-    { id: 'Helmholtz_L', label: 'глубина&nbsp;', sub: 'мм.&nbsp;', hold: 'щели порта' },
-    { id: 'Helmholtz_S', label: 'ширина&nbsp;', sub: 'мм.&nbsp;&nbsp;', hold: 'щели порта' },
-    { id: 'Helmholtz_S', label: 'высота&nbsp;', sub: 'м.&nbsp;&nbsp;&nbsp;', hold: 'щели порта' },
+    { id: 'Helmholtz_V', label: 'объём&nbsp;', sub: 'л.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', hold: 'всего корпуса' },
+    { id: 'Helmholtz_L', label: 'глубина&nbsp;', sub: 'мм.&nbsp;', hold: 'толщина доски' },
+    { id: 'Helmholtz_W', label: 'ширина&nbsp;', sub: 'мм.&nbsp;&nbsp;', hold: 'щели порта' },
+    { id: 'Helmholtz_H', label: 'высота&nbsp;', sub: 'мм.&nbsp;&nbsp;&nbsp;', hold: 'щели порта' },
     { id: 'Helmholtz_F', label: 'частота&nbsp;', sub: 'Hz&nbsp;', hold: 'настройки' },
 ];
 function draw_KDP(target) {
     const targetEl = document.querySelector(target);
     clear(target);
-    // Меняем тему для всех опций (твой стайл)
+    // Меняем тему для всех опций в хедер селект
     document.querySelectorAll('option').forEach(opt => opt.className = 'body_kdp');
     // 1. ЧЕРТЕЖ (Blueprint) — теперь он универсален
     const KDPBlueprint = (item) => h('label#' + item.id + '_', { innerHTML: item.label }, [
@@ -317,6 +317,16 @@ function draw_KDP(target) {
             placeholder: item.hold,
             attr: { inputmode: 'decimal' },
             oninput: (e) => oneOpCalculation(e.target.id)
+        })
+    ]);
+    const HelmholtzBlueprint = (item) => h('label#' + item.id + '_', { innerHTML: item.label }, [
+        item.sub ? h('sub', { innerHTML: item.sub }) : null,
+        h('input.inputs.KDP', {
+            id: item.id,
+            placeholder: item.hold,
+            attr: { inputmode: 'decimal' },
+            // МЕНЯЕМ ОБРАБОТЧИК:
+            oninput: (e) => helmholtzEngine(e.target.id)
         })
     ]);
     // 2. СБОРКА К.Д.П.
@@ -335,7 +345,7 @@ function draw_KDP(target) {
         h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => { e.target.closest('form').reset(); drawPreciseBoltGraph(); } }),
     ]);
     // 3. Резонатор
-    const HelmholtzNodes = factory(HelmholtzFields, KDPBlueprint);
+    const HelmholtzNodes = factory(HelmholtzFields, HelmholtzBlueprint);
     const HelmholtzSection = h('form#Helmholtz_form.form-block', {}, [
         h('h2.explanation', {}, 'Резонатор ГЕЛЬМГОЛЬЦА <br> Расчёт одной секции <br> (для подавления комнатных резонансов)'),
         ...HelmholtzNodes,
@@ -347,6 +357,12 @@ function draw_KDP(target) {
     drawPreciseBoltGraph();
 }
 
+
+
+
+
+
+//-------------------------------------------------------------------
 setTimeout(function () {
     const sel = document.getElementById('nav');
     if (sel) {
@@ -355,7 +371,7 @@ setTimeout(function () {
         sel.style.display = 'flex';
     }
 }, 10);
-//-------------------------------------------------------------------
+
 // 3. И в самом низу — запуск приложения
 document.addEventListener('DOMContentLoaded', () => {
     switchScreen('ЧИСЛОБОГ');

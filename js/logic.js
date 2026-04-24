@@ -66,14 +66,13 @@ function oneOpCalculation(id) {
 
     // Если мы на экране теста комнаты
     if (id.includes('_test')) {
-        drawPreciseBoltGraph(); // перерисовываем график при каждом нажатии клавиши
+        drawPreciseBoltGraph(); // перерисовываем график при каждом нажатии клавиши        
         return;
     }
     if (document.body.classList.contains('body_calc')) { runCalculator(); return; } // Обычный калькулятор
 
     if (isNaN(val) || el.value === '') {
-        // Если стерли — очищаем все поля этого экрана
-        //const inputs = document.querySelectorAll('input');
+        // Если стерли — очищаем все поля этого экрана       
         const inputs = el.closest('form').querySelectorAll('input');
         inputs.forEach(input => {
             input.value = '';
@@ -82,21 +81,25 @@ function oneOpCalculation(id) {
         return;
     }
 
-    // Красим текущее поле как ввод пользователя
+    // Красим текущее поле как ввод пользователя 
     toggle_input_cssClass(el, false);
 
     let results = null;
-    if (document.body.classList.contains('body_kdp')) { results = calculateKDP(id, val); }
+    if (id.includes('KDP_')) { results = calculateKDP(id, val); }
     if (document.body.classList.contains('body_spk')) { results = calculateSpeaker(id, val); }
-
+    if (id.includes('Helmholtz')) { calculateHelmholtz(id, val); console.log(id); }
+    // Выводим результаты
     // Выводим результаты
     if (results) {
         Object.entries(results).forEach(([resId, resVal]) => {
-            if (resId !== id) { // Не перезаписываем то, что вводит пользователь сейчас
-                const input = document.getElementById(resId);
+            // Если мы работаем с КДП, добавляем префикс к ключу, чтобы найти инпут
+            const finalId = id.includes('KDP_') ? 'KDP_' + resId : resId;
+
+            if (finalId !== id) {
+                const input = document.getElementById(finalId); // Теперь он найдет "KDP_height"
                 if (input) {
                     input.value = parseFloat(Number(resVal).toFixed(1));
-                    toggle_input_cssClass(input, true); // Красим как результат
+                    toggle_input_cssClass(input, true);
                 }
             }
         });
@@ -155,19 +158,19 @@ function calculateSpeaker(id, val) {
 function calculateKDP(id, val) {
     const z = 1.618;
     let height, width, length, square;
-    if (id === 'height') {
+    if (id === 'KDP_height') {
         height = val;// высота
         width = height * z;// ширина = высота * 1.62
         length = width * z;// длина = ширина * 1.62
-    } else if (id === 'width') {
+    } else if (id === 'KDP_width') {
         width = val;// ширина
         height = width / z;// высота = ширина 
         length = width * z;// длина = ширина * 1.62
-    } else if (id === 'length') {
+    } else if (id === 'KDP_length') {
         length = val;// длина
         width = length / z;// ширина = длина / 1.62
         height = width / z;// высота = ширина / 1.62
-    } else if (id === 'square') {
+    } else if (id === 'KDP_square') {
         square = val;// Расчет сторон из площади -
         height = Math.sqrt(square / (z ** 3));
         width = height * z;// ширина = высота * 1.62
@@ -178,6 +181,86 @@ function calculateKDP(id, val) {
     //err_of_small_height();
 }
 
+function helmholtzEngine(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // 1. Чистим ввод (твой золотой стандарт)
+    el.value = comma_point_correct(el.value);
+    const val = parseFloat(el.value);
+
+    // 2. Если поле пустое, мы не сбрасываем всё (как в КДП), 
+    // а просто останавливаем расчет, пока цифра не появится
+    if (isNaN(val)) return;
+
+    let results = {};
+
+    // Сценарий А: Пользователь меняет параметры порта или объем -> Считаем частоту
+    if (['Helmholtz_V', 'Helmholtz_L', 'Helmholtz_W', 'Helmholtz_H'].includes(id)) {
+        results = runHelmholtzMath('F');
+    }
+    // Сценарий Б: Пользователь меняет частоту -> Подбираем ширину щели
+    else if (id === 'Helmholtz_F') {
+        results = runHelmholtzMath('W');
+    }
+
+    // 3. Вывод результатов
+    if (results) {
+        Object.entries(results).forEach(([resId, resVal]) => {
+            const input = document.getElementById(resId);
+            if (input && resId !== id) {
+                input.value = resVal;
+                toggle_input_cssClass(input, true); // Подсвечиваем как вычисленное
+            }
+        });
+    }
+}
+
+function runHelmholtzMath(targetVar) {
+    // Вспомогательная функция для получения чисел из DOM
+    const getV = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+
+    const V_lit = getV('Helmholtz_V');
+    const L_mm = getV('Helmholtz_L');
+    const W_mm = getV('Helmholtz_W'); // ширина
+    const H_mm = getV('Helmholtz_H'); // высота
+    const F_hz = getV('Helmholtz_F');
+
+    const v = 344; // скорость звука
+    const V = V_lit / 1000;
+    const L = L_mm / 1000;
+    const H = H_mm / 1000;
+    const W = W_mm / 1000;
+
+    // Считаем ЧАСТОТУ (F)
+    if (targetVar === 'F') {
+        const S = W * H;
+        if (V <= 0 || S <= 0) return null;
+        const L_eff = L + 0.825 * Math.sqrt(S);
+        const freq = (v / (2 * Math.PI)) * Math.sqrt(S / (V * L_eff));
+        return { 'Helmholtz_F': freq.toFixed(1) };
+    }
+
+    // Считаем ШИРИНУ ЩЕЛИ (W) исходя из F
+    if (targetVar === 'W') {
+        if (V <= 0 || F_hz <= 0 || H <= 0) return null;
+
+        // Математика вывода W из формулы Гельмгольца — это уравнение.
+        // Для упрощения и точности (учитывая L_eff), 
+        // часто используют итерационный метод или упрощенную формулу S.
+        // Упрощенно: S = (V * L_eff * (2pi * F / v)^2)
+        const k = Math.pow((2 * Math.PI * F_hz) / v, 2);
+
+        // Так как L_eff зависит от корня из S, здесь скрыто квадратное уравнение.
+        // Примем для инженерной точности L_eff ≈ L + 10% (или используем L) 
+        // для нахождения первичного S, а затем уточним:
+        let S = V * L * k;
+        let W_calc = (S / H) * 1000; // перевод в мм
+
+        return { 'Helmholtz_W': W_calc.toFixed(1) };
+    }
+    return null;
+}
 //============================================
 
 
@@ -365,6 +448,7 @@ function runCalculator() {
 
     otvet.value = parseFloat(result.toFixed(10));
 }
+//---------------------------
 
 
 

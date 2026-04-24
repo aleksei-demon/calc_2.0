@@ -36,24 +36,11 @@ function toggle_input_cssClass(elem, isResult = false) {
     }
 }
 
-function put_to_RAM() {
-    navigator.clipboard.writeText(otvet.value)
-        .then(() => {
-            // Получилось!
-            document.querySelector('#massage').innerText = 'Скопировано в буфер обмена';
-            setTimeout(() => { document.querySelector('#massage').innerText = ''; }, 2200);
-        })
-        .catch(err => {
-            console.log('Something went wrong', err);
-        });
+function put_to_RAM(id) {
+    const element = document.getElementById(id);
+    navigator.clipboard.writeText(element.value)
 }
 
-function fill_select_options(where_to_get, option_id) {
-    for (let i = 0; i < where_to_get.length; i++) {
-        let option = document.querySelector(`#${option_id}${i}`);
-        option.setAttribute('value', where_to_get[i]);
-        option.innerHTML = where_to_get[i];
-    }
-}
+
 
 
