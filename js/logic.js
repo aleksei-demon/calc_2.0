@@ -225,42 +225,47 @@ function runHelmholtzMath(targetVar) {
     const H_mm = getV('Helmholtz_H');
     const F_hz = getV('Helmholtz_F');
 
-    const c = 344;
+    const c = 344; // скорость звука
     const V = V_lit / 1000;
     const L = L_mm / 1000;
     const W = W_mm / 1000;
     const H = H_mm / 1000;
 
-    // Расчет частоты (F) из размеров
+    // 1. Расчет ЧАСТОТЫ (прямой)
     if (targetVar === 'F') {
         const S = W * H;
         if (V <= 0 || S <= 0) return null;
 
-        // Поправка на концевое удлинение для прямоугольного отверстия
-        const deltaL = 0.825 * Math.sqrt(S);
-        const freq = (c / (2 * Math.PI)) * Math.sqrt(S / (V * (L + deltaL)));
+        // Эффективная длина с учетом порта на плоскости
+        const L_eff = L + 0.85 * Math.sqrt(S);
+        const freq = (c / (2 * Math.PI)) * Math.sqrt(S / (V * L_eff));
 
         return { 'Helmholtz_F': freq.toFixed(1) };
     }
 
-    // Расчет ширины щели (W) из частоты
+    // 2. Расчет ШИРИНЫ (обратный через квадратное уравнение площади)
     if (targetVar === 'W') {
         if (V <= 0 || F_hz <= 0 || H <= 0) return null;
 
-        // k = (2pi * f / c)^2
-        const k = Math.pow((2 * Math.PI * F_hz) / c, 2);
+        const k = Math.pow((2 * Math.PI * F_hz) / c, 2); // (2pi*f/c)^2
+        const M = V * k;
 
-        /* Тут физика: S / (V * (L + 0.825*sqrt(S))) = k
-           Для упрощения и стабильности без итераций:
-           При малых L (доска 16мм) доминирует поправка.
-           Найдем требуемую площадь S через квадратное уравнение 
-           или через прямое соотношение S = V * k * (L + поправка).
+        /* Уравнение: S / (L + 0.85*sqrt(S)) = M
+           Превращается в: 0.85*M*sqrt(S) + M*L - S = 0
+           Это квадратное уравнение относительно x = sqrt(S):
+           -x^2 + (0.85*M)x + (M*L) = 0
         */
-        const S_approx = V * k * (L + 0.1); // Грубое приближение для старта
-        const deltaL = 0.825 * Math.sqrt(S_approx);
-        const S_final = V * k * (L + deltaL);
+        const a = -1;
+        const b = 0.85 * M;
+        const cc = M * L;
 
-        const W_calc = (S_final / H) * 1000; // в мм
+        const D = b * b - 4 * a * cc;
+        if (D < 0) return null;
+
+        const sqrtS = (-b - Math.sqrt(D)) / (2 * a);
+        const S_final = sqrtS * sqrtS;
+        const W_calc = (S_final / H) * 1000;
+
         return { 'Helmholtz_W': W_calc.toFixed(1) };
     }
     return null;
@@ -364,28 +369,30 @@ function drawPreciseBoltGraph() {
         ctx.fill();
         ctx.shadowBlur = 0;
     }
-    // --- 6. ИНФОРМАЦИОННЫЙ ВЫВОД (F1, F2, F3 и S) ---
+    // --- 6. ИНФОРМАЦИОННЫЙ ВЫВОД (F1, F2, F3, S и ЧВ-ловушка) ---
     if (h > 0 && w > 0 && l > 0) {
-        // Расчет мод: v/(2h) * n
         const f1 = (344 / (2 * h)).toFixed(0);
         const f2 = (f1 * 2).toFixed(0);
         const f3 = (f1 * 3).toFixed(0);
         const area = (w * l).toFixed(0);
 
-        // Настройки шрифта: 150% от cw * 0.04 ≈ cw * 0.06
-        const fontSize = Math.round(cw * 0.06);
+        // Расчет длины четвертьволновой трубы для моды F3
+        // L = (v / F3) / 4 -> переводим в мм
+        const quarterWaveL = ((344 / f3) / 4 * 1000).toFixed(0);
+
+        const fontSize = Math.round(cw * 0.055); // чуть уменьшил, чтобы влезло больше строк
         ctx.font = `bold ${fontSize}px Courier New`;
         ctx.fillStyle = '#ff9900';
         ctx.textAlign = 'right';
 
-        // Позиционирование: правый нижний угол, выше оси X
         const textX = cw - 15;
         let currentY = ch - padB - 20;
 
         // Вывод в столбик снизу вверх
-        // Используем Unicode: ₁₂₃ для подстрочных и ² для надстрочного
+        ctx.fillText(`L(f₃)/4=${quarterWaveL}mm`, textX, currentY); // Длина ловушки
+        currentY -= fontSize * 1.2;
         ctx.fillText(`S=${area}m²`, textX, currentY);
-        currentY -= fontSize * 1.2; // Смещение вверх на высоту строки
+        currentY -= fontSize * 1.2;
         ctx.fillText(`F₃=${f3}Hz`, textX, currentY);
         currentY -= fontSize * 1.2;
         ctx.fillText(`F₂=${f2}Hz`, textX, currentY);
