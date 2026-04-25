@@ -372,8 +372,8 @@ function drawPreciseBoltGraph() {
     // --- 6. ИНФОРМАЦИОННЫЙ ВЫВОД (F1, F2, F3, S и ЧВ-ловушка) ---
     if (h > 0 && w > 0 && l > 0) {
         const f1 = (344 / (2 * h)).toFixed(0);
-        const f2 = (f1 * 2).toFixed(0);
-        const f3 = (f1 * 3).toFixed(0);
+        const f2 = ((344 / (2 * h)) * 2).toFixed(0);
+        const f3 = ((344 / (2 * h)) * 3).toFixed(0);
         const area = (w * l).toFixed(0);
 
         // Расчет длины четвертьволновой трубы для моды F3
@@ -389,7 +389,7 @@ function drawPreciseBoltGraph() {
         let currentY = ch - padB - 20;
 
         // Вывод в столбик снизу вверх
-        ctx.fillText(`L(f₃)/4=${quarterWaveL}mm`, textX, currentY); // Длина ловушки
+        ctx.fillText(`\u03BB(f₃)/4=${quarterWaveL}mm`, textX, currentY); // Длина ловушки
         currentY -= fontSize * 1.2;
         ctx.fillText(`S=${area}m²`, textX, currentY);
         currentY -= fontSize * 1.2;
