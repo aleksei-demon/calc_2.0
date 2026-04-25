@@ -293,9 +293,9 @@ const KDPFields = [
     { id: 'KDP_square', label: 'площадь&nbsp;', hold: 'введите значение' }
 ];
 const roomTestFields = [
-    { id: 'height_test', label: 'высота', sub: 'м.', hold: 'введите значение' },
-    { id: 'width_test', label: 'ширина', sub: 'м.', hold: 'введите значение' },
-    { id: 'length_test', label: 'длина&nbsp;', sub: 'м.', hold: 'введите значение' },
+    { id: 'height_test', label: 'высота&nbsp;', sub: 'м.', hold: 'введите значение' },
+    { id: 'width_test', label: 'ширина&nbsp;', sub: 'м.', hold: 'введите значение' },
+    { id: 'length_test', label: 'длина&nbsp;', sub: 'м.&nbsp;&nbsp;', hold: 'введите значение' },
 ];
 const HelmholtzFields = [
     { id: 'Helmholtz_V', label: 'объём&nbsp;', sub: 'л.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', hold: 'всего корпуса' },

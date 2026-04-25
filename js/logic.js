@@ -217,46 +217,50 @@ function helmholtzEngine(id) {
 }
 
 function runHelmholtzMath(targetVar) {
-    // Вспомогательная функция для получения чисел из DOM
     const getV = (id) => parseFloat(document.getElementById(id)?.value) || 0;
 
     const V_lit = getV('Helmholtz_V');
     const L_mm = getV('Helmholtz_L');
-    const W_mm = getV('Helmholtz_W'); // ширина
-    const H_mm = getV('Helmholtz_H'); // высота
+    const W_mm = getV('Helmholtz_W');
+    const H_mm = getV('Helmholtz_H');
     const F_hz = getV('Helmholtz_F');
 
-    const v = 344; // скорость звука
+    const c = 344;
     const V = V_lit / 1000;
     const L = L_mm / 1000;
-    const H = H_mm / 1000;
     const W = W_mm / 1000;
+    const H = H_mm / 1000;
 
-    // Считаем ЧАСТОТУ (F)
+    // Расчет частоты (F) из размеров
     if (targetVar === 'F') {
         const S = W * H;
         if (V <= 0 || S <= 0) return null;
-        const L_eff = L + 0.825 * Math.sqrt(S);
-        const freq = (v / (2 * Math.PI)) * Math.sqrt(S / (V * L_eff));
+
+        // Поправка на концевое удлинение для прямоугольного отверстия
+        const deltaL = 0.825 * Math.sqrt(S);
+        const freq = (c / (2 * Math.PI)) * Math.sqrt(S / (V * (L + deltaL)));
+
         return { 'Helmholtz_F': freq.toFixed(1) };
     }
 
-    // Считаем ШИРИНУ ЩЕЛИ (W) исходя из F
+    // Расчет ширины щели (W) из частоты
     if (targetVar === 'W') {
         if (V <= 0 || F_hz <= 0 || H <= 0) return null;
 
-        // Математика вывода W из формулы Гельмгольца — это уравнение.
-        // Для упрощения и точности (учитывая L_eff), 
-        // часто используют итерационный метод или упрощенную формулу S.
-        // Упрощенно: S = (V * L_eff * (2pi * F / v)^2)
-        const k = Math.pow((2 * Math.PI * F_hz) / v, 2);
+        // k = (2pi * f / c)^2
+        const k = Math.pow((2 * Math.PI * F_hz) / c, 2);
 
-        // Так как L_eff зависит от корня из S, здесь скрыто квадратное уравнение.
-        // Примем для инженерной точности L_eff ≈ L + 10% (или используем L) 
-        // для нахождения первичного S, а затем уточним:
-        let S = V * L * k;
-        let W_calc = (S / H) * 1000; // перевод в мм
+        /* Тут физика: S / (V * (L + 0.825*sqrt(S))) = k
+           Для упрощения и стабильности без итераций:
+           При малых L (доска 16мм) доминирует поправка.
+           Найдем требуемую площадь S через квадратное уравнение 
+           или через прямое соотношение S = V * k * (L + поправка).
+        */
+        const S_approx = V * k * (L + 0.1); // Грубое приближение для старта
+        const deltaL = 0.825 * Math.sqrt(S_approx);
+        const S_final = V * k * (L + deltaL);
 
+        const W_calc = (S_final / H) * 1000; // в мм
         return { 'Helmholtz_W': W_calc.toFixed(1) };
     }
     return null;
