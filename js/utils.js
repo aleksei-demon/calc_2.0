@@ -42,5 +42,21 @@ function put_to_RAM(id) {
 }
 
 
-
-
+function event_dblclick(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Список констант для перебора
+    const constants = [
+        Math.PI.toFixed(9),
+        Math.E.toFixed(9),
+        (Math.PI / 2).toFixed(9)
+    ];
+    // Получаем текущий индекс из атрибута data-revolve (или 0, если его нет)
+    let index = parseInt(el.dataset.revolve) || 0;
+    // Устанавливаем значение
+    el.value = constants[index % constants.length];
+    // Запускаем пересчет
+    if (typeof oneOpCalculation === 'function') { oneOpCalculation(id); }
+    // Сохраняем следующий индекс обратно в элемент
+    el.dataset.revolve = index + 1;
+}

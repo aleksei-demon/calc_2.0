@@ -103,8 +103,14 @@ if (true) { //start
 
 
     function clear(node = '') {
-        if (node == '') { body.innerHTML = ``; return; }
-        document.querySelector(node).innerHTML = ``;
+        // 1. Если node пустая, очищаем body
+        if (node === '') { if (document.body) document.body.innerHTML = ''; return; }
+        // 2. Ищем элемент
+        const target = document.querySelector(node);
+        // 3. Проверка на существование перед записью
+        if (target) {
+            target.innerHTML = '';
+        } else { console.warn(`Элемент "${node}" не найден в DOM. Очистка отменена.`); }
     }
 
 

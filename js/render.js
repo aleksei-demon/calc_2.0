@@ -167,12 +167,22 @@ function draw_calc(target) {
 
     // Собираем форму одним деревом  
     const form = h('form#form', { onsubmit: (e) => e.preventDefault() }, [
-        h('input#op1.inputs.user_fill', { placeholder: ' A', attr: { inputmode: 'decimal', autocomplete: 'off' }, oninput: (e) => oneOpCalculation(e.target.id) }),
+        h('input#op1.inputs.user_fill', {
+            placeholder: ' A',
+            attr: { inputmode: 'decimal', autocomplete: 'off' },
+            oninput: (e) => oneOpCalculation(e.target.id),
+            ondblclick: (e) => event_dblclick(e.target.id),
+        }),
 
         // ВАЖНО: Селект создается сразу с детьми!
         h('select#dey.select', { onchange: (e) => runCalculator(e.target.id) }, options),
 
-        h('input#op2.inputs.user_fill', { placeholder: ' Б', attr: { inputmode: 'decimal', autocomplete: 'off' }, oninput: (e) => oneOpCalculation(e.target.id) }),
+        h('input#op2.inputs.user_fill', {
+            placeholder: ' Б',
+            attr: { inputmode: 'decimal', autocomplete: 'off' },
+            oninput: (e) => oneOpCalculation(e.target.id),
+            ondblclick: (e) => event_dblclick(e.target.id),
+        }),
         h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true, attr: { autocomplete: 'off' }, onclick: (e) => put_to_RAM(e.target.id) }),
 
         h('div.btn-container', {}, [
@@ -356,10 +366,6 @@ function draw_KDP(target) {
     targetEl.append(testSection, kdpSection, HelmholtzSection);
     drawPreciseBoltGraph();
 }
-
-
-
-
 
 
 //-------------------------------------------------------------------
