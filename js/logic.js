@@ -3,6 +3,7 @@
 // logic.js
 let inputQueue = []; // Здесь храним порядок ввода: ['voltage', 'current']
 
+
 function handleOnInput(id) {
     const el = document.getElementById(id);
     // 1. Если пользователь стер данные вручную - удаляем из очереди
@@ -177,6 +178,9 @@ function calculateKDP(id, val) {
         length = width * z;// длина = ширина * 1.62
     }
     square = (width * length); // площадь
+
+    const viewport = document.querySelector('#room_viewport');
+    if (viewport) { viewport.innerHTML = generateRoomSVG2D(width.toFixed(1), length.toFixed(1)); }
     return { height, length, width, square };
     //err_of_small_height();
 }
@@ -399,6 +403,112 @@ function drawPreciseBoltGraph() {
         currentY -= fontSize * 1.2;
         ctx.fillText(`F₁=${f1}Hz`, textX, currentY);
     }
+}
+
+
+
+
+
+
+
+function generateRoomSVG2D(rw, rl) {
+    // rw - ширина (5м), rl - длина (8м)
+    // Коэффициенты по Кардасу, о которых мы говорили:
+    const x = (rw * 0.276).toFixed(2); // Расстояние до боковой стены
+    const y = (rw * 0.447).toFixed(2); // Расстояние до фронтальной стены
+
+    // Масштабирование для ViewBox (база 400x600)
+    const scale = 350 / rw;
+    const svgW = 400;
+    const svgH = (rl * scale) + 100;
+
+    // Координаты динамиков
+    const spkLX = 25 + (x * scale);
+    const spkRX = (rw * scale) + 25 - (x * scale);
+    const spkY = 50 + (y * scale);
+    const baseB = spkRX - spkLX;
+    const listenX = (spkLX + spkRX) / 2;
+    const listenY = spkY + (baseB * 0.866);
+    return `
+    <svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="background: transparent;">
+    <defs>
+    <marker id="tick" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <line x1="5" y1="0" x2="5" y2="10" stroke="#f97316" stroke-width="2" />
+    </marker>
+    </defs>
+        <style>
+        .wall-outer { stroke: rgba(0, 255, 0, 0.4); stroke-width: 4; fill: none; }
+        .wall-inner { stroke: rgba(0, 255, 0, 0.4); stroke-width: 1; fill: none; }           
+            .dim-line { stroke: #a34e00; stroke-width: 1; marker-start: url(#tick); marker-end: url(#tick); }
+            .axis-line { stroke: #f97316; stroke-width: 1; stroke-dasharray: 4; } /* Оранжевый */
+            .speaker { fill: none; stroke: #a34e00; stroke-width: 2; }
+            .text-main { fill: #f97316; font-family: monospace; font-size: 16px; font-weight: bold; }
+            .text-dim { fill: #f97316; font-family: monospace; font-size: 14px; }
+            .listener { fill: #f97316; }
+            .stereo-zone { 
+                fill: #f97316;       /* Цвет зоны (сейчас оранжевый как у слушателя) */
+                fill-opacity: 0.15;  /* Прозрачность (0.1 - почти не видно, 1.0 - глухой цвет) */
+                stroke: #a34e00;    /* Цвет контура */
+                stroke-width: 0.5;
+                stroke-dasharray: 2; /* Пунктирный контур */
+            }
+        </style>
+        <!-- 
+        ЗОНА СТЕРЕОЭФФЕКТА 
+        Находится ЗА слушателем. 
+        M - вершина (чуть выше слушателя), 
+        Q - кривые Безье для эффекта "провала" внутрь (экспонентоподобно).
+        Чтобы подвинуть: измени listenY + [число] 
+     -->
+     <path d="M ${listenX} ${listenY - 90} 
+              Q ${listenX - 20} ${listenY + 100} ${listenX - 120} ${listenY + 200} 
+              L ${listenX + 120} ${listenY + 200} 
+              Q ${listenX + 20} ${listenY + 100} ${listenX} ${listenY - 90}" 
+           class="stereo-zone" />
+        <!-- Стены комнаты -->
+        <rect x="25" y="50" width="${rw * scale}" height="${rl * scale}" class="wall-outer" />
+        <rect x="28" y="53" width="${(rw * scale) - 6}" height="${(rl * scale) - 6}" class="wall-inner" />
+
+        <!-- Размерные линии: Ширина (верх) -->
+        <line x1="25" y1="30" x2="${(rw * scale) + 25}" y2="30" class="dim-line" />
+        <text x="${(rw * scale) / 2}" y="25" class="text-dim">${rw} м.</text>
+
+        <!-- Размерные линии: Длина (право) -->
+        <line x1="${(rw * scale) + 45}" y1="50" x2="${(rw * scale) + 45}" y2="${(rl * scale) + 50}" class="dim-line" />
+        <text x="${(rw * scale) + 32}" y="${(rl * scale) / 2 + 50}" class="text-dim" transform="rotate(90 ${(rw * scale) + 32} ${(rl * scale) / 2 + 50})">${rl} м.</text>
+
+        <!-- Колонки (схематично как на рисунке) -->
+        <g id="spkL" transform="rotate(-30 ${spkLX} ${spkY})">
+            <path d="M ${spkLX - 15} ${spkY - 20} L ${spkLX + 15} ${spkY - 20} L ${spkLX + 20} ${spkY} L ${spkLX - 20} ${spkY} Z" class="speaker" />
+            <rect x="${spkLX - 5}" y="${spkY - 30}" width="10" height="10" class="speaker" />
+        </g>
+        
+        <g id="spkR" transform="rotate(30 ${spkRX} ${spkY})">
+            <path d="M ${spkRX - 15} ${spkY - 20} L ${spkRX + 15} ${spkY - 20} L ${spkRX + 20} ${spkY} L ${spkRX - 20} ${spkY} Z" class="speaker" />
+            <rect x="${spkRX - 5}" y="${spkY - 30}" width="10" height="10" class="speaker" />
+        </g>
+
+        <!-- Линии привязки X и Y -->
+        <line x1="25" y1="${spkY}" x2="${spkLX}" y2="${spkY}" class="dim-line" />
+        <text x="35" y="${spkY - 5}" class="text-dim">${x} м.</text>
+
+        <line x1="${spkRX}" y1="${spkY}" x2="${(rw * scale) + 25}" y2="${spkY}" class="dim-line" />
+        <text x="${spkRX + 28}" y="${spkY - 5}" class="text-dim">${x} м.</text>
+
+        <line x1="${svgW / 2}" y1="50" x2="${svgW / 2}" y2="${spkY}" class="axis-line" />
+        <text x="${svgW / 2 + 5}" y="${50 + (y * scale) / 2}" class="text-main" transform="rotate(90 ${svgW / 2 + 5} ${50 + (y * scale) / 2})">${y} м.</text>
+
+        <!-- Слушатель -->
+        <circle cx="${svgW / 2}" cy="${spkY + (spkRX - spkLX) * 0.866}" r="5" class="listener" />
+        <text x="${svgW / 2 - 40}" y="${spkY + (spkRX - spkLX) * 0.866 + 25}" class="text-main">Слушатель</text>
+
+        <!-- Зона стереоэффекта -->
+        <circle cx="${svgW / 2}" cy="${spkY + (spkRX - spkLX) * 0.866}" r="5" class="listener" />
+        <text x="${svgW / 2 - 70}" y="${spkY + (spkRX - spkLX) * 0.866 + 180}" class="text-dim">Зона стереоэффекта</text>
+        <!-- Равносторонний треугольник (пунктир) -->
+        <path d="M ${spkLX} ${spkY} L ${spkRX} ${spkY} L ${svgW / 2} ${spkY + (spkRX - spkLX) * 0.866} Z" fill="none" stroke="#f97316" stroke-width="1" stroke-dasharray="2" />
+    </svg>
+    `;
 }
 
 

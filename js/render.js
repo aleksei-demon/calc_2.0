@@ -63,12 +63,13 @@ window.addEventListener('resize', () => {
 });
 
 const nav_configs = [
-    { label: '&nbsp;ЧИСЛОБОГ', value: 'ЧИСЛОБОГ', selected: true },
+    { label: '&nbsp;ЧИСЛОБОГ', value: 'ЧИСЛОБОГ' },
     { label: '&nbsp;закон Ома', value: 'закон Ома' },
     { label: '&nbsp;&nbsp;Т. В. З.', value: 'Т. В. З.' },
-    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.' },
+    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.', selected: true },
     { label: '&nbsp;Корпус А.С.', value: 'Корпус А.С.' }
 ];
+
 
 
 function draw_init() {
@@ -344,8 +345,13 @@ function draw_KDP(target) {
     const kdpSection = h('form#KDP_form.form-block', { onsubmit: e => e.preventDefault() }, [
         h('h2.explanation', {}, 'ИДЕАЛЬНАЯ КОМНАТА <br> для прослушивания'),
         ...fields, // Высыпаем инпуты
+        h('div#room_viewport', {
+            style: { width: '80%', maxWidth: '300px' },
+            innerHTML: generateRoomSVG2D(1.618, 2.618), // Начальные значения
+        }),
         h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => e.target.closest('form').reset() }),
     ]);
+
     // 3. ТЕСТ РЕАЛЬНОЙ КОМНАТЫ (для примера, как добавить вторую)
     const testFieldsNodes = factory(roomTestFields, KDPBlueprint);
     const testSection = h('form#RoomTest_form.form-block', {}, [
@@ -389,4 +395,6 @@ window.addEventListener('pageshow', (event) => {
         switchScreen('ЧИСЛОБОГ');
     }
 });
+
+
 

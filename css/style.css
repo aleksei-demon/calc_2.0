@@ -133,6 +133,14 @@ canvas {
 }
 
 
+#disp3D {
+  display: block;
+  margin: 0 auto;
+  cursor: move;
+  /* Появится иконка руки, сразу поймешь, что клик работает */
+  position: relative;
+  z-index: 999;
+}
 
 #op1,
 #op2 {
