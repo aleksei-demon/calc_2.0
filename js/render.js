@@ -340,25 +340,45 @@ function draw_KDP(target) {
             oninput: (e) => helmholtzEngine(e.target.id)
         })
     ]);
-    // 2. СБОРКА К.Д.П.
+    // СЕКЦИЯ 1: ИДЕАЛЬНАЯ КОМНАТА
     const fields = factory(KDPFields, KDPBlueprint);
     const kdpSection = h('form#KDP_form.form-block', { onsubmit: e => e.preventDefault() }, [
         h('h2.explanation', {}, 'ИДЕАЛЬНАЯ КОМНАТА <br> для прослушивания'),
-        ...fields, // Высыпаем инпуты
+        ...fields,
         h('div#room_viewport', {
-            style: { width: '80%', maxWidth: '300px' },
-            innerHTML: generateRoomSVG2D(1.618, 2.618), // Начальные значения
+            style: { width: '100%', maxWidth: '300px', margin: '0 auto' },
+            innerHTML: generateRoomSVG2D(1.618, 2.618),
         }),
-        h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => { e.target.closest('form').reset(); document.getElementById('room_viewport').innerHTML = generateRoomSVG2D(1.618, 2.618); } }),
+        h('button', {
+            type: 'button',
+            className: 'inputs sbros',
+            innerText: 'С Б Р О С',
+            onclick: (e) => {
+                e.target.closest('form').reset();
+                document.getElementById('room_viewport').innerHTML = generateRoomSVG2D(1.618, 2.618);
+            }
+        }),
     ]);
 
-    // 3. ТЕСТ РЕАЛЬНОЙ КОМНАТЫ (для примера, как добавить вторую)
+    // СЕКЦИЯ 2: ТЕСТ РЕАЛЬНОЙ КОМНАТЫ
     const testFieldsNodes = factory(roomTestFields, KDPBlueprint);
     const testSection = h('form#RoomTest_form.form-block', {}, [
         h('h2.explanation', {}, 'ТЕСТ КОМНАТЫ <br> на пригодность к аудио'),
         ...testFieldsNodes,
-        h('canvas#disp', {}, []),
-        h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => { e.target.closest('form').reset(); drawPreciseBoltGraph(); } }),
+        // ЗАМЕНА CANVAS НА DIV:
+        h('div#bolt_viewport', {
+            style: { width: '100%', maxWidth: '300px', margin: '0 auto' },
+            innerHTML: generateBoltGraphSVG()
+        }),
+        h('button', {
+            type: 'button',
+            className: 'inputs sbros',
+            innerText: 'С Б Р О С',
+            onclick: (e) => {
+                e.target.closest('form').reset();
+                document.getElementById('bolt_viewport').innerHTML = generateBoltGraphSVG();
+            }
+        }),
     ]);
     // 3. Резонатор
     const HelmholtzNodes = factory(HelmholtzFields, HelmholtzBlueprint);
@@ -370,7 +390,6 @@ function draw_KDP(target) {
     ]);
     // Добавляем всё в главный контейнер
     targetEl.append(testSection, kdpSection, HelmholtzSection);
-    drawPreciseBoltGraph();
 }
 
 

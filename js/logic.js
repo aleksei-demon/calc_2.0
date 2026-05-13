@@ -67,7 +67,10 @@ function oneOpCalculation(id) {
 
     // Если мы на экране теста комнаты
     if (id.includes('_test')) {
-        drawPreciseBoltGraph(); // перерисовываем график при каждом нажатии клавиши        
+        const viewport = document.getElementById('bolt_viewport');
+        if (viewport) {
+            viewport.innerHTML = generateBoltGraphSVG();
+        } // перерисовываем график при каждом нажатии клавиши        
         return;
     }
     if (document.body.classList.contains('body_calc')) { runCalculator(); return; } // Обычный калькулятор
@@ -89,7 +92,7 @@ function oneOpCalculation(id) {
     if (id.includes('KDP_')) { results = calculateKDP(id, val); }
     if (document.body.classList.contains('body_spk')) { results = calculateSpeaker(id, val); }
     if (id.includes('Helmholtz')) { calculateHelmholtz(id, val); console.log(id); }
-    // Выводим результаты
+
     // Выводим результаты
     if (results) {
         Object.entries(results).forEach(([resId, resVal]) => {
@@ -276,135 +279,113 @@ function runHelmholtzMath(targetVar) {
 }
 //============================================
 
+function generateBoltGraphSVG() {
+    // Получаем данные из инпутов (используя вашу функцию очистки запятых)
+    const h_val = typeof comma_point_correct === 'function' ? comma_point_correct(document.getElementById('height_test')?.value) : 0;
+    const w_val = typeof comma_point_correct === 'function' ? comma_point_correct(document.getElementById('width_test')?.value) : 0;
+    const l_val = typeof comma_point_correct === 'function' ? comma_point_correct(document.getElementById('length_test')?.value) : 0;
 
-
-function drawPreciseBoltGraph() {
-    const canvas = document.getElementById('disp');
-    if (!canvas) return;
-    syncCanvasSize(canvas);
-    const ctx = canvas.getContext('2d');
-    const cw = canvas.width;
-    const ch = canvas.height;
-    // Константы диапазона (диапазон координат на графике: 2.0)
+    const viewBoxSize = 400;
     const minK = 1.0;
     const maxK = 3.0;
     const range = maxK - minK;
-    // Адаптивные отступы
-    const padL = cw * 0.1; // отступ слева (для цифр Y)
-    const padB = ch * 0.1; // отступ снизу (для цифр X)
-    const graphW = cw - padL - 10;
-    const graphH = ch - padB - 10;
-    // ИСПРАВЛЕННЫЕ функции перевода координат
-    const toPxX = (k) => padL + ((k - minK) / range) * graphW;
-    const toPxY = (k) => (ch - padB) - ((k - minK) / range) * graphH;
-    // --- 1. ФОН ---    
-    ctx.fillStyle = "rgba(0, 0, 0, 0)";
-    ctx.fillRect(0, 0, cw, ch);
-    // --- 2. СЕТКА ---
-    ctx.strokeStyle = '#ff9900'; // оранжевый
-    ctx.lineWidth = 0.1;
-    ctx.beginPath();
+
+    const padL = 45; // Отступ слева под цифры
+    const padB = 40; // Отступ снизу под цифры
+    const graphArea = viewBoxSize - padL - 15;
+
+    // Функции проекции координат в пиксели SVG
+    const toPxX = (k) => padL + ((k - minK) / range) * graphArea;
+    const toPxY = (k) => (viewBoxSize - padB) - ((k - minK) / range) * graphArea;
+
+    // Вспомогательная функция для сборки полигонов зон
+    const getPolyPoints = (pts) => pts.map(p => `${toPxX(p.x)},${toPxY(p.y)}`).join(' ');
+
+    // Координаты зон Болта
+    const zones = [
+        { id: 'narrow', pts: [{ x: 1.2, y: 1.3 }, { x: 1.31, y: 1.88 }, { x: 1.71, y: 1.88 }] },
+        { id: 'gold', pts: [{ x: 1.36, y: 2.11 }, { x: 1.88, y: 2.11 }, { x: 1.88, y: 2.83 }, { x: 1.52, y: 2.83 }] },
+        { id: 'top', pts: [{ x: 2.11, y: 2.31 }, { x: 2.11, y: 2.83 }, { x: 2.59, y: 2.83 }] }
+    ];
+
+    // Сетка (линии через 0.2)
+    let gridLines = '';
     for (let k = minK; k <= maxK; k += 0.2) {
-        // Вертикали
-        ctx.moveTo(toPxX(k), toPxY(minK));
-        ctx.lineTo(toPxX(k), toPxY(maxK));
-        // Горизонтали
-        ctx.moveTo(toPxX(minK), toPxY(k));
-        ctx.lineTo(toPxX(maxK), toPxY(k));
-    }
-    ctx.stroke();
-    // --- 3. ИСПРАВЛЕННЫЕ ТОЧНЫЕ ЗОНЫ БОЛТА (Координаты из оригинала) ---
-    const zoneColor = 'rgba(0, 255, 0, 0.4)'; // полупрозрачный зеленый
-    // Функция отрисовки одного полигона
-    const drawPoly = (pts) => {
-        ctx.fillStyle = zoneColor;
-        ctx.beginPath();
-        ctx.moveTo(toPxX(pts[0].x), toPxY(pts[0].y));
-        for (let i = 1; i < pts.length; i++) ctx.lineTo(toPxX(pts[i].x), toPxY(pts[i].y));
-        ctx.closePath();
-        ctx.fill();
-    };
-    // 1. Левая нижняя узкая зона
-    drawPoly([{ x: 1.2, y: 1.3 }, { x: 1.31, y: 1.88 }, { x: 1.71, y: 1.88 }]);
-    // 2. Центральная зона (Золотая) — более узкая и лежит вдоль диагонали
-    drawPoly([{ x: 1.36, y: 2.11 }, { x: 1.88, y: 2.11 }, { x: 1.88, y: 2.83 }, { x: 1.52, y: 2.83 },]);
-    // 3. Правая верхняя зона (Треугольник) — смещена левее
-    drawPoly([{ x: 2.11, y: 2.31 }, { x: 2.11, y: 2.83 }, { x: 2.59, y: 2.83 }]);
-    // --- 4. ОСИ, ЦИФРЫ И МЕТКИ ---
-    ctx.strokeStyle = '#ff9900'; // оранжевый
-    ctx.fillStyle = '#ff9900';
-    ctx.lineWidth = 1;
-    ctx.font = `${Math.round(cw * 0.038)}px Courier New`; // адаптивный шрифт
-    // Ось X
-    ctx.beginPath();
-    ctx.moveTo(padL, ch - padB); ctx.lineTo(cw - 10, ch - padB);
-    ctx.stroke();
-    // Ось Y
-    ctx.beginPath();
-    ctx.moveTo(padL, ch - padB); ctx.lineTo(padL, 10);
-    ctx.stroke();
-    // Подписи делений и деления
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    for (let k = minK; k <= maxK; k += 0.2) {
-        let val = k.toFixed(1);
-        const ptX = toPxX(k);
-        const ptY = toPxY(k);
-        // X числа и деления
-        ctx.fillRect(ptX - 1, ch - padB, 1, cw * 0.015); // деления (риски)
-        ctx.fillText(val, ptX, ch - padB + cw * 0.05);   // числа
-        // Y числа и деления
-        ctx.fillRect(padL - cw * 0.015, ptY - 1, cw * 0.015, 1); // деления (риски)
-        ctx.fillText(val, padL - cw * 0.06, ptY + 2);            // числа
-    }
-    // --- 5. ТОЧКА ПОЛЬЗОВАТЕЛЯ ---
-    const h = comma_point_correct(document.getElementById('height_test')?.value);
-    const w = comma_point_correct(document.getElementById('width_test')?.value);
-    const l = comma_point_correct(document.getElementById('length_test')?.value);
-    if (h > 0 && w > 0 && l > 0) {
-        const userK_X = w / h;
-        const userK_Y = l / h;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = 'red';
-        ctx.fillStyle = '#ff3300';
-        ctx.beginPath();
-        // Используем исправленные toPxX и toPxY
-        ctx.arc(toPxX(userK_X), toPxY(userK_Y), cw * 0.018, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-    // --- 6. ИНФОРМАЦИОННЫЙ ВЫВОД (F1, F2, F3, S и ЧВ-ловушка) ---
-    if (h > 0 && w > 0 && l > 0) {
-        const f1 = (344 / (2 * h)).toFixed(0);
-        const f2 = ((344 / (2 * h)) * 2).toFixed(0);
-        const f3 = ((344 / (2 * h)) * 3).toFixed(0);
-        const area = (w * l).toFixed(0);
+        const pX = toPxX(k); // Позиция для вертикальной линии
+        const pY = toPxY(k); // Позиция для горизонтальной линии
 
-        // Расчет длины четвертьволновой трубы для моды F3
-        // L = (v / F3) / 4 -> переводим в мм
-        const quarterWaveL = ((344 / f3) / 4 * 1000).toFixed(0);
+        // Вертикальные линии (фиксированный X)
+        gridLines += `<line x1="${pX}" y1="${toPxY(minK)}" x2="${pX}" y2="${toPxY(maxK)}" class="grid-line" />`;
 
-        const fontSize = Math.round(cw * 0.055); // чуть уменьшил, чтобы влезло больше строк
-        ctx.font = `bold ${fontSize}px Courier New`;
-        ctx.fillStyle = '#ff9900';
-        ctx.textAlign = 'right';
-
-        const textX = cw - 15;
-        let currentY = ch - padB - 20;
-
-        // Вывод в столбик снизу вверх
-        ctx.fillText(`\u03BB(f₃)/4=${quarterWaveL}mm`, textX, currentY); // Длина ловушки
-        currentY -= fontSize * 1.2;
-        ctx.fillText(`S=${area}m²`, textX, currentY);
-        currentY -= fontSize * 1.2;
-        ctx.fillText(`F₃=${f3}Hz`, textX, currentY);
-        currentY -= fontSize * 1.2;
-        ctx.fillText(`F₂=${f2}Hz`, textX, currentY);
-        currentY -= fontSize * 1.2;
-        ctx.fillText(`F₁=${f1}Hz`, textX, currentY);
+        // Горизонтальные линии (фиксированный Y)
+        gridLines += `<line x1="${toPxX(minK)}" y1="${pY}" x2="${toPxX(maxK)}" y2="${pY}" class="grid-line" />`;
     }
+
+    // Подписи осей
+    let labels = '';
+    for (let k = minK; k <= maxK; k += 0.4) { // Шаг 0.4 для меток, чтобы не частить
+        const val = k.toFixed(1);
+        labels += `<text x="${toPxX(k)}" y="${viewBoxSize - padB + 20}" class="text-dim" text-anchor="middle">${val}</text>`;
+        labels += `<text x="${padL - 10}" y="${toPxY(k) + 4}" class="text-dim" text-anchor="end">${val}</text>`;
+    }
+
+    // Точка пользователя и инфо-текст
+    let userPoint = '';
+    let infoText = '';
+    if (h_val > 0 && w_val > 0 && l_val > 0) {
+        const kX = w_val / h_val;
+        const kY = l_val / h_val;
+        const f1 = (344 / (2 * h_val)).toFixed(0);
+        const f2 = ((344 / (2 * h_val)) * 2).toFixed(0);
+        const f3 = ((344 / (2 * h_val)) * 3).toFixed(0);
+        const qW = ((344 / f3) / 4 * 1000).toFixed(0);
+
+        userPoint = `<circle cx="${toPxX(kX)}" cy="${toPxY(kY)}" r="6" class="user-dot" filter="url(#glow)" />`;
+
+        infoText = `
+            <g transform="translate(${viewBoxSize - 10}, ${viewBoxSize - padB - 10})" text-anchor="end">
+                <text y="-80" class="text-info">F1: ${f1}Hz</text>
+                <text y="-60" class="text-info">F2: ${f2}Hz</text>
+                <text y="-40" class="text-info">F3: ${f3}Hz</text>
+                <text y="-20" class="text-info">S: ${(w_val * l_val).toFixed(1)}m²</text>
+                <text y="0" class="text-info" >\u03BB(f₃)/4: ${qW}mm</text>
+            </g>`;
+    }
+
+    return `
+    <svg viewBox="0 0 ${viewBoxSize} ${viewBoxSize}" xmlns="http://www.w3.org/2000/svg" style="background: transparent;">
+        <defs>
+        <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="5" result="blur" />
+        <!-- Усиливаем яркость размытия (умножаем прозрачность) -->
+        <feColorMatrix in="blur" type="matrix" 
+            values="0 0 0 0 1
+                    0 0 0 0 0.2
+                    0 0 0 0 0
+                    0 0 0 1.5 0" result="boost" />
+        <feComposite in="SourceGraphic" in2="boost" operator="over" />
+    </filter>
+        </defs>
+        <style>
+            .grid-line { stroke: #ff9900; stroke-width: 0.2; }
+            .axis { stroke: #ff9900; stroke-width: 1.5; fill: none; }
+            .bolt-zone { fill: rgba(0, 255, 0, 0.35); stroke: rgba(0, 255, 0, 0.5); stroke-width: 1; }
+            .text-dim { fill: #ff9900; font-family: monospace; font-size: 12px; }
+            .text-info { fill: #ff9900; font-family: monospace; font-size: 16px; font-weight: bold; }
+            .user-dot { fill: #ff3300; }
+        </style>
+        
+        ${gridLines}
+        
+        ${zones.map(z => `<polygon points="${getPolyPoints(z.pts)}" class="bolt-zone" />`).join('')}
+        
+        <path d="M ${padL} 10 L ${padL} ${viewBoxSize - padB} L ${viewBoxSize - 10} ${viewBoxSize - padB}" class="axis" />
+        
+        ${labels}
+        ${infoText}
+        ${userPoint}
+    </svg>`;
 }
-
 
 
 
@@ -512,14 +493,7 @@ function generateRoomSVG2D(rw, rl) {
 }
 
 
-function syncCanvasSize(canvas) {
-    // Получаем реальную ширину, которую выделил браузер (через CSS)
-    const rect = canvas.getBoundingClientRect();
-    // Приравниваем внутреннее разрешение к экранному
-    // Теперь 1 пиксель кода = 1 пиксель экрана. Ноль размытия!
-    canvas.width = rect.width;
-    canvas.height = rect.width; // Раз он квадратный
-}
+
 //============================================
 
 
@@ -580,3 +554,139 @@ function runCalculator() {
 
 
 
+// function drawPreciseBoltGraph() {
+//     const canvas = document.getElementById('disp');
+//     if (!canvas) return;
+//     syncCanvasSize(canvas);
+//     const ctx = canvas.getContext('2d');
+//     const cw = canvas.width;
+//     const ch = canvas.height;
+//     // Константы диапазона (диапазон координат на графике: 2.0)
+//     const minK = 1.0;
+//     const maxK = 3.0;
+//     const range = maxK - minK;
+//     // Адаптивные отступы
+//     const padL = cw * 0.1; // отступ слева (для цифр Y)
+//     const padB = ch * 0.1; // отступ снизу (для цифр X)
+//     const graphW = cw - padL - 10;
+//     const graphH = ch - padB - 10;
+//     // ИСПРАВЛЕННЫЕ функции перевода координат
+//     const toPxX = (k) => padL + ((k - minK) / range) * graphW;
+//     const toPxY = (k) => (ch - padB) - ((k - minK) / range) * graphH;
+//     // --- 1. ФОН ---
+//     ctx.fillStyle = "rgba(0, 0, 0, 0)";
+//     ctx.fillRect(0, 0, cw, ch);
+//     // --- 2. СЕТКА ---
+//     ctx.strokeStyle = '#ff9900'; // оранжевый
+//     ctx.lineWidth = 0.1;
+//     ctx.beginPath();
+//     for (let k = minK; k <= maxK; k += 0.2) {
+//         // Вертикали
+//         ctx.moveTo(toPxX(k), toPxY(minK));
+//         ctx.lineTo(toPxX(k), toPxY(maxK));
+//         // Горизонтали
+//         ctx.moveTo(toPxX(minK), toPxY(k));
+//         ctx.lineTo(toPxX(maxK), toPxY(k));
+//     }
+//     ctx.stroke();
+//     // --- 3. ИСПРАВЛЕННЫЕ ТОЧНЫЕ ЗОНЫ БОЛТА (Координаты из оригинала) ---
+//     const zoneColor = 'rgba(0, 255, 0, 0.4)'; // полупрозрачный зеленый
+//     // Функция отрисовки одного полигона
+//     const drawPoly = (pts) => {
+//         ctx.fillStyle = zoneColor;
+//         ctx.beginPath();
+//         ctx.moveTo(toPxX(pts[0].x), toPxY(pts[0].y));
+//         for (let i = 1; i < pts.length; i++) ctx.lineTo(toPxX(pts[i].x), toPxY(pts[i].y));
+//         ctx.closePath();
+//         ctx.fill();
+//     };
+//     // 1. Левая нижняя узкая зона
+//     drawPoly([{ x: 1.2, y: 1.3 }, { x: 1.31, y: 1.88 }, { x: 1.71, y: 1.88 }]);
+//     // 2. Центральная зона (Золотая) — более узкая и лежит вдоль диагонали
+//     drawPoly([{ x: 1.36, y: 2.11 }, { x: 1.88, y: 2.11 }, { x: 1.88, y: 2.83 }, { x: 1.52, y: 2.83 },]);
+//     // 3. Правая верхняя зона (Треугольник) — смещена левее
+//     drawPoly([{ x: 2.11, y: 2.31 }, { x: 2.11, y: 2.83 }, { x: 2.59, y: 2.83 }]);
+//     // --- 4. ОСИ, ЦИФРЫ И МЕТКИ ---
+//     ctx.strokeStyle = '#ff9900'; // оранжевый
+//     ctx.fillStyle = '#ff9900';
+//     ctx.lineWidth = 1;
+//     ctx.font = `${Math.round(cw * 0.038)}px Courier New`; // адаптивный шрифт
+//     // Ось X
+//     ctx.beginPath();
+//     ctx.moveTo(padL, ch - padB); ctx.lineTo(cw - 10, ch - padB);
+//     ctx.stroke();
+//     // Ось Y
+//     ctx.beginPath();
+//     ctx.moveTo(padL, ch - padB); ctx.lineTo(padL, 10);
+//     ctx.stroke();
+//     // Подписи делений и деления
+//     ctx.textAlign = 'center';
+//     ctx.textBaseline = 'middle';
+//     for (let k = minK; k <= maxK; k += 0.2) {
+//         let val = k.toFixed(1);
+//         const ptX = toPxX(k);
+//         const ptY = toPxY(k);
+//         // X числа и деления
+//         ctx.fillRect(ptX - 1, ch - padB, 1, cw * 0.015); // деления (риски)
+//         ctx.fillText(val, ptX, ch - padB + cw * 0.05);   // числа
+//         // Y числа и деления
+//         ctx.fillRect(padL - cw * 0.015, ptY - 1, cw * 0.015, 1); // деления (риски)
+//         ctx.fillText(val, padL - cw * 0.06, ptY + 2);            // числа
+//     }
+//     // --- 5. ТОЧКА ПОЛЬЗОВАТЕЛЯ ---
+//     const h = comma_point_correct(document.getElementById('height_test')?.value);
+//     const w = comma_point_correct(document.getElementById('width_test')?.value);
+//     const l = comma_point_correct(document.getElementById('length_test')?.value);
+//     if (h > 0 && w > 0 && l > 0) {
+//         const userK_X = w / h;
+//         const userK_Y = l / h;
+//         ctx.shadowBlur = 15;
+//         ctx.shadowColor = 'red';
+//         ctx.fillStyle = '#ff3300';
+//         ctx.beginPath();
+//         // Используем исправленные toPxX и toPxY
+//         ctx.arc(toPxX(userK_X), toPxY(userK_Y), cw * 0.018, 0, Math.PI * 2);
+//         ctx.fill();
+//         ctx.shadowBlur = 0;
+//     }
+//     // --- 6. ИНФОРМАЦИОННЫЙ ВЫВОД (F1, F2, F3, S и ЧВ-ловушка) ---
+//     if (h > 0 && w > 0 && l > 0) {
+//         const f1 = (344 / (2 * h)).toFixed(0);
+//         const f2 = ((344 / (2 * h)) * 2).toFixed(0);
+//         const f3 = ((344 / (2 * h)) * 3).toFixed(0);
+//         const area = (w * l).toFixed(0);
+
+//         // Расчет длины четвертьволновой трубы для моды F3
+//         // L = (v / F3) / 4 -> переводим в мм
+//         const quarterWaveL = ((344 / f3) / 4 * 1000).toFixed(0);
+
+//         const fontSize = Math.round(cw * 0.055); // чуть уменьшил, чтобы влезло больше строк
+//         ctx.font = `bold ${fontSize}px Courier New`;
+//         ctx.fillStyle = '#ff9900';
+//         ctx.textAlign = 'right';
+
+//         const textX = cw - 15;
+//         let currentY = ch - padB - 20;
+
+//         // Вывод в столбик снизу вверх
+//         ctx.fillText(`\u03BB(f₃)/4=${quarterWaveL}mm`, textX, currentY); // Длина ловушки
+//         currentY -= fontSize * 1.2;
+//         ctx.fillText(`S=${area}m²`, textX, currentY);
+//         currentY -= fontSize * 1.2;
+//         ctx.fillText(`F₃=${f3}Hz`, textX, currentY);
+//         currentY -= fontSize * 1.2;
+//         ctx.fillText(`F₂=${f2}Hz`, textX, currentY);
+//         currentY -= fontSize * 1.2;
+//         ctx.fillText(`F₁=${f1}Hz`, textX, currentY);
+//     }
+// }
+
+
+// function syncCanvasSize(canvas) {
+//     // Получаем реальную ширину, которую выделил браузер (через CSS)
+//     const rect = canvas.getBoundingClientRect();
+//     // Приравниваем внутреннее разрешение к экранному
+//     // Теперь 1 пиксель кода = 1 пиксель экрана. Ноль размытия!
+//     canvas.width = rect.width;
+//     canvas.height = rect.width; // Раз он квадратный
+// }
