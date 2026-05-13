@@ -413,7 +413,7 @@ function drawPreciseBoltGraph() {
 
 function generateRoomSVG2D(rw, rl) {
     // rw - ширина (5м), rl - длина (8м)
-    // Коэффициенты по Кардасу, о которых мы говорили:
+    // Коэффициенты по Кардасу
     const x = (rw * 0.276).toFixed(2); // Расстояние до боковой стены
     const y = (rw * 0.447).toFixed(2); // Расстояние до фронтальной стены
 

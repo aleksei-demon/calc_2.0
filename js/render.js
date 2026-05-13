@@ -349,7 +349,7 @@ function draw_KDP(target) {
             style: { width: '80%', maxWidth: '300px' },
             innerHTML: generateRoomSVG2D(1.618, 2.618), // Начальные значения
         }),
-        h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => e.target.closest('form').reset() }),
+        h('button', { type: 'button', className: 'inputs sbros', innerText: 'С Б Р О С', onclick: (e) => { e.target.closest('form').reset(); document.getElementById('room_viewport').innerHTML = generateRoomSVG2D(1.618, 2.618); } }),
     ]);
 
     // 3. ТЕСТ РЕАЛЬНОЙ КОМНАТЫ (для примера, как добавить вторую)
@@ -395,6 +395,8 @@ window.addEventListener('pageshow', (event) => {
         switchScreen('ЧИСЛОБОГ');
     }
 });
+
+
 
 
 
