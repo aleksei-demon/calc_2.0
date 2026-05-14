@@ -113,7 +113,7 @@ function oneOpCalculation(id) {
             const input = document.getElementById(finalId);
             if (input && finalId !== id) {
                 // Используем toFixed(2) для точности, но parseFloat уберет лишние нули
-                input.value = parseFloat(Number(resVal).toFixed(2));
+                input.value = parseFloat(Number(resVal).toFixed(1));
                 toggle_input_cssClass(input, true);
             }
         });
