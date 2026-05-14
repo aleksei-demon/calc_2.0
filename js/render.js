@@ -492,49 +492,64 @@ function swipeScreen(direction) {
     const menu = document.getElementById('nav');
     if (!menu) return;
 
-    // Находим текущее имя по тексту выбранной опции
-    const currentName = menu.selectedOptions[0].text;
+    // Очищаем имя от возможных лишних пробелов по краям
+    const currentName = menu.selectedOptions[0].text.trim();
+
+    // Ищем индекс
     let currentIndex = screenOrder.indexOf(currentName);
 
-    // Вычисляем новый индекс с зацикливанием (после последнего идет первый)
+    // ЕСЛИ ИМЯ НЕ НАЙДЕНО (возвращает -1)
+    // Это и есть причина, по которой "не идет по кругу"
+    if (currentIndex === -1) {
+        // Попробуем найти индекс через частичное совпадение, если точное не сработало
+        currentIndex = screenOrder.findIndex(name => name.includes(currentName) || currentName.includes(name));
+    }
+
+    // Если всё равно не нашли — выходим, чтобы не сломать расчеты
+    if (currentIndex === -1) {
+        console.error("Экран не найден в списке:", currentName);
+        return;
+    }
+
     let nextIndex = (currentIndex + direction + screenOrder.length) % screenOrder.length;
 
-    // Используем твою функцию переключения
     switchScreen(screenOrder[nextIndex]);
 }
 
 
 let touchStartX = 0;
-let touchEndX = 0;
-
-function handleGesture() {
-    const swipeThreshold = 50; // Минимальное расстояние для распознавания свайпа
-    const diff = touchStartX - touchEndX;
-
-    if (Math.abs(diff) > swipeThreshold) {
-        if (diff > 0) {
-            // Свайп влево -> следующий экран
-            swipeScreen(1);
-        } else {
-            // Свайп вправо -> предыдущий экран
-            swipeScreen(-1);
-        }
-    }
-}
+let touchStartY = 0; // Добавим Y для проверки на вертикальный скролл
 
 document.addEventListener('touchstart', e => {
+    // Игнорируем ввод в поля
+    if (e.target.closest('input, select, textarea, button')) return;
+
     touchStartX = e.changedTouches[0].screenX;
-}, false);
+    touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
 
 document.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleGesture();
-}, false);
+    if (touchStartX === 0) return; // Если начали свайп на инпуте, ничего не делаем
 
-document.addEventListener('touchstart', e => {
-    // Если коснулись инпута или селекта — не мешаем вводу
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-    touchStartX = e.changedTouches[0].screenX;
-}, false);
+    const touchEndX = e.changedTouches[0].screenX;
+    const touchEndY = e.changedTouches[0].screenY;
+
+    const dx = touchStartX - touchEndX;
+    const dy = touchStartY - touchEndY;
+
+    // Проверка: горизонтальный сдвиг должен быть больше вертикального
+    // Чтобы случайный наклон при скролле не переключал экраны
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+        if (dx > 0) {
+            swipeScreen(1);  // Свайп влево -> вперед
+        } else {
+            swipeScreen(-1); // Свайп вправо -> назад
+        }
+    }
+
+    // Сброс координат
+    touchStartX = 0;
+    touchStartY = 0;
+}, { passive: true });
 
 
