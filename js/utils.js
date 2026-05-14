@@ -60,3 +60,6 @@ function event_dblclick(id) {
     // Сохраняем следующий индекс обратно в элемент
     el.dataset.revolve = index + 1;
 }
+
+
+

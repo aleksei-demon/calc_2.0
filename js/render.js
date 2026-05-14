@@ -89,7 +89,7 @@ function draw_init() {
     const header = h('header#header', {}, [
         h('form#form2', { onsubmit: e => e.preventDefault() }, [
             h('select#nav.select', {
-                onchange: (e) => switchScreen(e.target.value)
+                onchange: (e) => { switchScreen(e.target.value); }
             }, options),
         ])
     ]);
@@ -100,8 +100,7 @@ function draw_init() {
 
 
 function switchScreen(name) {
-    inputQueue = []; // Обнуляем очередь при каждом переходе
-    const main = document.getElementById('app_content');
+    inputQueue = []; // Обнуляем очередь при каждом переходе    
     const menu = document.getElementById('nav');
     // Синхронизируем заголовок селекта с выбранным разделом
     if (menu) menu.value = name;
@@ -121,6 +120,7 @@ function switchScreen(name) {
     if (name === "К. Д. П.") draw_KDP('#app_content');
     if (name === "Корпус А.С.") draw_speaker('#app_content');
     if (name === "ЧИСЛОБОГ") draw_calc('#app_content');
+    updateFavicon();
 }
 
 // Запуск приложения при загрузке страницы
@@ -416,6 +416,125 @@ window.addEventListener('pageshow', (event) => {
 });
 
 
+function updateFavicon() {
+    const bodyClass = document.body.className;
+    let iconContent = '';
 
+    // Отрисовка геометрии для каждой темы
+    switch (bodyClass) {
+        case 'body_ohms': // Закон Ома (символ круга разделенного на U, I, R)
+            iconContent = `
+            <path d="M 20 80 H 38 A 25 25 0 1 1 62 80 H 80"  fill="none" 
+            stroke="currentColor" 
+            stroke-width="10" 
+            stroke-linecap="round" 
+            stroke-linejoin="round"/>`;
+            break;
+        case 'body_trans': // Т.В.З. (символ катушек трансформатора)
+            iconContent = `
+            /* Левая обмотка (первичная) */
+            <path d="M30 20 A 10 11.5 0 1 0 30 43 A 10 11.5 0 1 0 30 66 A 10 11.5 0 1 0 30 89" 
+                  fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+            /* Сердечник */
+            <line x1="50" y1="20" x2="50" y2="80" 
+                  stroke="currentColor" stroke-width="6" stroke-dasharray="8,8"/>
+            /* Правая обмотка (вторичная) */
+            <path d="M70 20 A 10 11.5 0 1 1 70 43 A 10 11.5 0 1 1 70 66 A 10 11.5 0 1 1 70 89" 
+                  fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>`;
+            break;
+        case 'body_kdp': // К.Д.П. (золотое сечение / пропорции комнаты)
+            iconContent = `
+                <rect x="15" y="25" width="70" height="50" fill="none" stroke="currentColor" stroke-width="8"/>
+                <path d="M15 75 Q 85 75, 85 25" fill="none" stroke="currentColor" stroke-width="5" opacity="0.7"/>`;
+            break;
+        case 'body_spk': // Корпус А.С. (динамик в ящике)
+            iconContent = `
+                <rect x="25" y="10" width="50" height="80" rx="5" fill="none" stroke="currentColor" stroke-width="8"/>
+                <circle cx="50" cy="65" r="15" fill="none" stroke="currentColor" stroke-width="6"/>
+                <circle cx="50" cy="30" r="8" fill="none" stroke="currentColor" stroke-width="4"/>`;
+            break;
+        default: // ЧИСЛОБОГ (сетка кнопок калькулятора)
+            iconContent = `
+                <rect x="20" y="20" width="22" height="22" rx="3" fill="currentColor"/>
+                <rect x="58" y="20" width="22" height="22" rx="3" fill="currentColor"/>
+                <rect x="20" y="58" width="22" height="22" rx="3" fill="currentColor"/>
+                <rect x="58" y="58" width="22" height="22" rx="3" fill="currentColor"/>`;
+    }
+    // Формируем SVG с CSS-медиазапросом для автоматической инверсии
+    const svgIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <style>
+            svg { color: #1a1a1a; } /* Цвет для светлой темы */
+            @media (prefers-color-scheme: dark) {
+                svg { color: #f0f0f0; } /* Цвет для темной темы */
+            }
+        </style>
+        ${iconContent}
+    </svg>`;
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/svg+xml';
+        document.head.appendChild(link);
+    }
+    link.href = 'data:image/svg+xml,' + encodeURIComponent(svgIcon);
+}
+
+
+const screenOrder = ["ЧИСЛОБОГ", "закон Ома", "Т. В. З.", "К. Д. П.", "Корпус А.С."];
+
+/**
+ * Переключает на следующий или предыдущий экран
+ * @param {number} direction - 1 для свайпа влево (вперед), -1 для свайпа вправо (назад)
+ */
+function swipeScreen(direction) {
+    const menu = document.getElementById('nav');
+    if (!menu) return;
+
+    // Находим текущее имя по тексту выбранной опции
+    const currentName = menu.selectedOptions[0].text;
+    let currentIndex = screenOrder.indexOf(currentName);
+
+    // Вычисляем новый индекс с зацикливанием (после последнего идет первый)
+    let nextIndex = (currentIndex + direction + screenOrder.length) % screenOrder.length;
+
+    // Используем твою функцию переключения
+    switchScreen(screenOrder[nextIndex]);
+}
+
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+function handleGesture() {
+    const swipeThreshold = 50; // Минимальное расстояние для распознавания свайпа
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            // Свайп влево -> следующий экран
+            swipeScreen(1);
+        } else {
+            // Свайп вправо -> предыдущий экран
+            swipeScreen(-1);
+        }
+    }
+}
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+}, false);
+
+document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleGesture();
+}, false);
+
+document.addEventListener('touchstart', e => {
+    // Если коснулись инпута или селекта — не мешаем вводу
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    touchStartX = e.changedTouches[0].screenX;
+}, false);
 
 
