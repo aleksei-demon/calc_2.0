@@ -196,6 +196,12 @@ option {
   color: #e33;
 }
 
+#mode {
+  margin: 5vh;
+  width: 80px;
+  scale: 2.2;
+  translate: 0 -6px;
+}
 
 #disp3D {
   display: block;

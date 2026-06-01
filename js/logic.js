@@ -584,83 +584,228 @@ let isPlaying = false;
 
 
 
+// function sineSwith() {
+//     const btn = document.getElementById('sbros');
+//     const display = document.getElementById('freq_display');
+//     const freqInput = document.getElementById('freq');
+//     // Обновляем текст частоты
+//     if (display) display.innerText = freqInput.value + ' Hz';
+
+//     if (isPlaying) {
+//         // --- СТОП ---
+//         if (gainNode) {
+//             // Плавное затухание (убираем щелчок при выключении)
+//             // 1. Делаем затухание очень быстрым (0.1 сек), чтобы кнопка была отзывчивой
+//             const rampTime = 0.1;
+
+//             // 2. Рампа до очень маленького значения (почти тишина)
+//             // gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + rampTime);
+//             gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+//             // 3. Останавливаем осциллятор чуть позже, чем закончится затухание
+//             setTimeout(() => {
+//                 oscillator.stop();
+//                 oscillator.disconnect();
+//                 isPlaying = false;
+//                 btn.innerText = 'П У С К';
+//             }, (rampTime * 1000) + 99); // +20 мс для надежности
+//         }
+//     } else {
+//         // --- ПУСК ---
+//         // Инициализируем контекст только по клику (требование браузеров)
+//         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+//         // Создаем фильтр
+//         const filterNode = audioCtx.createBiquadFilter();
+//         filterNode.type = 'lowpass'; // Тип фильтра
+//         filterNode.frequency.value = 400; // Частота среза (Hz), с которой начинается подавление
+//         filterNode.Q.value = 1; // Добротность (резонанс), 1 — обычно достаточно
+//         oscillator = audioCtx.createOscillator();
+//         gainNode = audioCtx.createGain();
+
+//         // Настройка
+//         oscillator.type = 'sine';
+//         const freqVal = document.getElementById('freq').value;
+//         const ampVal = document.getElementById('amplitude').value / 100;
+
+//         oscillator.frequency.setValueAtTime(freqVal, audioCtx.currentTime);
+//         gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Начинаем с тишины
+
+//         oscillator.connect(gainNode);
+//         gainNode.connect(filterNode); // Gain идет в фильтр
+//         filterNode.connect(audioCtx.destination); // Фильтр идет в выход
+
+//         oscillator.start();
+
+//         // Плавное нарастание (убираем щелчок при включении)
+//         gainNode.gain.linearRampToValueAtTime(ampVal, audioCtx.currentTime + 0.05);
+
+//         isPlaying = true;
+//         btn.innerText = 'С Т О П';
+//     }
+// }
+
+// function sineEngine(id) {
+//     const freqInput = document.getElementById('freq');
+//     const ampInput = document.getElementById('amplitude');
+//     const display = document.getElementById('freq_display');
+
+//     // Обновляем текст частоты
+//     if (display) display.innerText = freqInput.value + ' Hz';
+
+//     // Если звук играет, применяем изменения плавно
+//     if (isPlaying && audioCtx) {
+//         const now = audioCtx.currentTime;
+
+//         // Плавное изменение частоты (без щелчков)
+//         oscillator.frequency.setTargetAtTime(parseFloat(freqInput.value), now, 0.05);
+
+//         // Плавное изменение громкости (без щелчков)
+//         gainNode.gain.setTargetAtTime(parseFloat(ampInput.value) / 100, now, 0.05);
+//     }
+// }
+
+// function createWhiteNoiseBuffer(ctx) {
+//     const bufferSize = ctx.sampleRate * 2; // 2 секунды
+//     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+//     const data = buffer.getChannelData(0);
+//     for (let i = 0; i < bufferSize; i++) {
+//         data[i] = Math.random() * 2 - 1; // Случайные числа от -1 до 1
+//     }
+//     return buffer;
+// }
+
+
+
+
+//let audioCtx = null;
+//let gainNode = null;
+let sourceNode = null; // Будет либо Oscillator, либо BufferSource
+let filterChain = []; // Массив для цепочки фильтров
+//let isPlaying = false;
+
+// 1. Генератор белого шума (база для розового)
+function createPinkNoiseBuffer(ctx) {
+    const bufferSize = ctx.sampleRate * 8; // 2 секунды
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    // Алгоритм Пола Келлета для генерации розового шума
+    let b0, b1, b2, b3, b4, b5, b6;
+    b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
+
+    for (let i = 0; i < bufferSize; i++) {
+        let white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        data[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+        data[i] *= 0.11; // Нормализация громкости
+        b6 = white * 0.115926;
+    }
+    return buffer;
+}
+
+
+
+
+
 function sineSwith() {
     const btn = document.getElementById('sbros');
-    const display = document.getElementById('freq_display');
-    const freqInput = document.getElementById('freq');
-    // Обновляем текст частоты
-    if (display) display.innerText = freqInput.value + ' Hz';
+    const isPinkNoise = document.getElementById('mode')?.checked;
 
     if (isPlaying) {
         // --- СТОП ---
-        if (gainNode) {
-            // Плавное затухание (убираем щелчок при выключении)
-            // 1. Делаем затухание очень быстрым (0.1 сек), чтобы кнопка была отзывчивой
-            const rampTime = 0.1;
-
-            // 2. Рампа до очень маленького значения (почти тишина)
-            // gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + rampTime);
-            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-            // 3. Останавливаем осциллятор чуть позже, чем закончится затухание
-            setTimeout(() => {
-                oscillator.stop();
-                oscillator.disconnect();
-                isPlaying = false;
-                btn.innerText = 'П У С К';
-            }, (rampTime * 1000) + 99); // +20 мс для надежности
-        }
+        gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+        setTimeout(() => {
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+            }
+            if (gainNode) {
+                gainNode.disconnect();
+            }
+            // Также стоит отключить сам контекст или обнулить переменные, 
+            // если есть подозрение на "мусор" в памяти, но здесь этого достаточно.
+            isPlaying = false;
+            btn.innerText = 'П У С К';
+        }, 120);
     } else {
         // --- ПУСК ---
-        // Инициализируем контекст только по клику (требование браузеров)
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        // Создаем фильтр
-        const filterNode = audioCtx.createBiquadFilter();
-        filterNode.type = 'lowpass'; // Тип фильтра
-        filterNode.frequency.value = 400; // Частота среза (Hz), с которой начинается подавление
-        filterNode.Q.value = 1; // Добротность (резонанс), 1 — обычно достаточно
-        oscillator = audioCtx.createOscillator();
+
         gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
-        // Настройка
-        oscillator.type = 'sine';
-        const freqVal = document.getElementById('freq').value;
-        const ampVal = document.getElementById('amplitude').value / 100;
+        if (isPinkNoise) {
+            // Режим РОЗОВЫЙ ШУМ
+            sourceNode = audioCtx.createBufferSource();
+            sourceNode.buffer = createPinkNoiseBuffer(audioCtx);
+            sourceNode.loop = true;
 
-        oscillator.frequency.setValueAtTime(freqVal, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Начинаем с тишины
+            const shelfFilter = audioCtx.createBiquadFilter();
+            shelfFilter.type = 'lowshelf';
+            shelfFilter.frequency.value = 250;
+            shelfFilter.gain.value = 16;
 
-        oscillator.connect(gainNode);
-        gainNode.connect(filterNode); // Gain идет в фильтр
-        filterNode.connect(audioCtx.destination); // Фильтр идет в выход
+            // Цепочка: Источник -> Фильтр -> Громкость -> Выход
+            sourceNode.connect(shelfFilter);
+            shelfFilter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
 
-        oscillator.start();
+            // ЗАПУСК ТОЛЬКО ЗДЕСЬ
+            sourceNode.start();
 
-        // Плавное нарастание (убираем щелчок при включении)
-        gainNode.gain.linearRampToValueAtTime(ampVal, audioCtx.currentTime + 0.05);
+            // Громкость
+            const masterGain = 0.25;
+            const targetAmp = (document.getElementById('amplitude').value / 100) * masterGain;
+            gainNode.gain.linearRampToValueAtTime(targetAmp, audioCtx.currentTime + 0.1);
+
+        } else {
+            // Режим СИНУС
+            sourceNode = audioCtx.createOscillator();
+            sourceNode.type = 'sine';
+            sourceNode.frequency.value = document.getElementById('freq').value;
+
+            // Цепочка: Источник -> Громкость -> Выход
+            sourceNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            // ЗАПУСК ТОЛЬКО ЗДЕСЬ
+            sourceNode.start();
+
+            gainNode.gain.linearRampToValueAtTime(document.getElementById('amplitude').value / 100, audioCtx.currentTime + 0.1);
+        }
 
         isPlaying = true;
         btn.innerText = 'С Т О П';
     }
 }
 
+
+
 function sineEngine(id) {
+    if (!isPlaying || !audioCtx) return;
+
     const freqInput = document.getElementById('freq');
     const ampInput = document.getElementById('amplitude');
     const display = document.getElementById('freq_display');
+    const isPinkNoise = document.getElementById('mode')?.checked;
 
-    // Обновляем текст частоты
     if (display) display.innerText = freqInput.value + ' Hz';
 
-    // Если звук играет, применяем изменения плавно
-    if (isPlaying && audioCtx) {
-        const now = audioCtx.currentTime;
+    const now = audioCtx.currentTime;
 
-        // Плавное изменение частоты (без щелчков)
-        oscillator.frequency.setTargetAtTime(parseFloat(freqInput.value), now, 0.05);
+    // Громкость регулируем всегда
+    gainNode.gain.setTargetAtTime(parseFloat(ampInput.value) / 100, now, 0.05);
 
-        // Плавное изменение громкости (без щелчков)
-        gainNode.gain.setTargetAtTime(parseFloat(ampInput.value) / 100, now, 0.05);
+    // Частоту регулируем только если это осциллятор (синус)
+    if (!isPinkNoise && sourceNode.type === 'sine') {
+        sourceNode.frequency.setTargetAtTime(parseFloat(freqInput.value), now, 0.05);
     }
 }
+
+
 
 

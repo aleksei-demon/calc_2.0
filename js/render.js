@@ -66,8 +66,8 @@ const nav_configs = [
     { label: '&nbsp;ЧИСЛОБОГ', value: 'ЧИСЛОБОГ' },
     { label: '&nbsp;закон Ома', value: 'закон Ома' },
     { label: '&nbsp;&nbsp;Т. В. З.', value: 'Т. В. З.' },
-    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.', selected: true },
-    { label: '&nbsp;генератор', value: 'генератор', },
+    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.' },
+    { label: '&nbsp;генератор', value: 'генератор', selected: true },
     { label: '&nbsp;Корпус А.С.', value: 'Корпус А.С.' },
 ];
 
@@ -396,6 +396,7 @@ function draw_KDP(target) {
 }
 
 const sineFields = [
+    { id: 'mode', label: 'Розовый шум', attr: { type: 'checkbox' } },
     { id: 'freq_display', tag: 'output', label: 'частота&nbsp;&nbsp;', attr: { value: '0' } },
     { id: 'freq', label: 'F', sub: 'Hz&nbsp;&nbsp;', type: 'range', attr: { type: 'range', min: '5', max: '300', value: '50', step: '1' }, },
     { id: 'amplitude', label: 'amp&nbsp;', attr: { type: 'range', min: '0', max: '100', value: '50', step: '1' }, },
@@ -437,7 +438,7 @@ function draw_sine(target) {
 
         ...sineNodes,// <--- ВОТ ЗДЕСЬ МАГИЯ (распаковка массива)
         h('button#sbros', { className: 'inputs', innerText: 'П У С К', onclick: () => sineSwith() }),
-        h('p.explanation', { innerHTML: '- тон перестраиваемый по частоте для поиска резонансов <br> <br> - розовый шум для оценки АЧХ' })
+        h('p.explanation', { innerHTML: '- тон перестраиваемый по частоте для поиска резонансов <br> <br> -  Розовый шум: имеет наклон -3дб/окт, что обеспечивает в каждой октаве абсолютно одинаковое количество энергии, предназначен для оценики линейности АЧХ' })
     ]);
     targetEl.append(sineForm);
 }
