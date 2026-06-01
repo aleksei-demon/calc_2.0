@@ -237,7 +237,6 @@ function calculateKDP(id, val) {
     const viewport = document.querySelector('#room_viewport');
     if (viewport) { viewport.innerHTML = generateRoomSVG2D(width.toFixed(1), length.toFixed(1)); }
     return { height, length, width, square };
-    //err_of_small_height();
 }
 
 function helmholtzEngine(id) {
@@ -576,7 +575,93 @@ function runCalculator() {
 }
 //---------------------------
 
+//--------Г-Е-Н-Е-Р-А-Т-О-Р--------------------
+//----------Г-Е-Н-Е-Р-А-Т-О-Р--------------------
+let audioCtx = null;
+let oscillator = null;
+let gainNode = null;
+let isPlaying = false;
 
 
+
+function sineSwith() {
+    const btn = document.getElementById('sbros');
+
+    if (isPlaying) {
+        // --- СТОП ---
+        if (gainNode) {
+            // Плавное затухание (убираем щелчок при выключении)
+            // 1. Делаем затухание очень быстрым (0.1 сек), чтобы кнопка была отзывчивой
+            const rampTime = 0.1;
+
+            // 2. Рампа до очень маленького значения (почти тишина)
+            // gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + rampTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            // 3. Останавливаем осциллятор чуть позже, чем закончится затухание
+            setTimeout(() => {
+                oscillator.stop();
+                oscillator.disconnect();
+                isPlaying = false;
+                btn.innerText = 'П У С К';
+            }, (rampTime * 1000) + 99); // +20 мс для надежности
+        }
+    } else {
+        // --- ПУСК ---
+        // Инициализируем контекст только по клику (требование браузеров)
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Создаем фильтр
+        const filterNode = audioCtx.createBiquadFilter();
+        filterNode.type = 'lowpass'; // Тип фильтра
+        filterNode.frequency.value = 400; // Частота среза (Hz), с которой начинается подавление
+        filterNode.Q.value = 1; // Добротность (резонанс), 1 — обычно достаточно
+        oscillator = audioCtx.createOscillator();
+        gainNode = audioCtx.createGain();
+
+        // Настройка
+        oscillator.type = 'sine';
+        const freqVal = document.getElementById('freq').value;
+        const ampVal = document.getElementById('amplitude').value / 100;
+
+        oscillator.frequency.setValueAtTime(freqVal, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Начинаем с тишины
+
+        // Старая цепочка:
+        // oscillator.connect(gainNode);
+        // gainNode.connect(audioCtx.destination);
+
+        // Новая цепочка:
+        oscillator.connect(gainNode);
+        gainNode.connect(filterNode); // Gain идет в фильтр
+        filterNode.connect(audioCtx.destination); // Фильтр идет в выход
+
+        oscillator.start();
+
+        // Плавное нарастание (убираем щелчок при включении)
+        gainNode.gain.linearRampToValueAtTime(ampVal, audioCtx.currentTime + 0.05);
+
+        isPlaying = true;
+        btn.innerText = 'С Т О П';
+    }
+}
+
+function sineEngine(id) {
+    const freqInput = document.getElementById('freq');
+    const ampInput = document.getElementById('amplitude');
+    const display = document.getElementById('freq_display');
+
+    // Обновляем текст частоты
+    if (display) display.innerText = freqInput.value + ' Hz';
+
+    // Если звук играет, применяем изменения плавно
+    if (isPlaying && audioCtx) {
+        const now = audioCtx.currentTime;
+
+        // Плавное изменение частоты (без щелчков)
+        oscillator.frequency.setTargetAtTime(parseFloat(freqInput.value), now, 0.05);
+
+        // Плавное изменение громкости (без щелчков)
+        gainNode.gain.setTargetAtTime(parseFloat(ampInput.value) / 100, now, 0.05);
+    }
+}
 
 

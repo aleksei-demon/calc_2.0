@@ -41,6 +41,7 @@ form {
   align-items: center;
 }
 
+output,
 input::placeholder {
   font-family: 'Galaktika';
   font-size: 5vh;
@@ -58,6 +59,70 @@ input::placeholder {
   letter-spacing: 0.5vw;
   border-radius: 5px;
   color: #DFDDD9;
+}
+
+/* Убираем стандартное оформление */
+.custom-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+  /* Фон родителя */
+  margin: 10px 0;
+}
+
+/* Трек (линия) */
+.custom-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 12px;
+  background: #1a1a1a;
+  /* Темный фон для глубины */
+  border-radius: 6px;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Бегунок (ползунок) */
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: #DFDDD9;
+  /* Твой основной цвет текста */
+  cursor: pointer;
+  margin-top: -6px;
+  /* Центрируем относительно трека */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 0 5px rgba(255, 255, 255, 0.3);
+  border: 2px solid #555;
+  transition: transform 0.1s ease;
+}
+
+/* Эффект при наведении и нажатии */
+.custom-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  background: #ffffff;
+}
+
+.custom-slider:active::-webkit-slider-thumb {
+  transform: scale(0.95);
+  background: #CC8193;
+  /* Твой акцентный цвет при нажатии */
+}
+
+/* Дублируем для Firefox, чтобы не сломалось */
+.custom-slider::-moz-range-track {
+  height: 12px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.custom-slider::-moz-range-thumb {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: #DFDDD9;
+  cursor: pointer;
+  border: 2px solid #555;
 }
 
 button {
@@ -90,15 +155,9 @@ option {
   font-family: 'verdana';
 }
 
-canvas {
-  width: 100%;
-  /* Занимает всю ширину родителя */
-  max-width: 400px;
-  /* Чтобы на огромных мониторах не стал гигантским */
-  aspect-ratio: 1 / 1;
-  /* Магия CSS: всегда держит квадрат */
-  display: block;
-  /* margin: 0px auto; */
+
+.labeOfGen {
+  padding-left: 0px;
 }
 
 .body_calc {
@@ -119,6 +178,10 @@ canvas {
 
 .body_spk {
   background: #523527;
+}
+
+.body_sine {
+  background: #395153;
 }
 
 .user_fill {
@@ -220,7 +283,7 @@ p {
   text-align: center;
 }
 
-@media screen and (orientation: landscape) {
+@media screen and (orientation: landscape) and (min-aspect-ratio: 1/1) {
 
   #explanation,
   select {
@@ -246,6 +309,10 @@ p {
     font-size: 6vh;
   }
 
+  .labeOfGen {
+    margin-left: 5vw;
+  }
+
   canvas {
     width: 100%;
     /* Занимает всю ширину родителя */
@@ -266,6 +333,14 @@ p {
   #calculate_kdp,
   #calculate_trans {
     font-size: 6vh;
+  }
+
+  #freq,
+  #amplitude {
+    width: 80vh !important;
+    /* !important поможет, если стили конфликтуют */
+    margin-top: 6vh;
+
   }
 
   .KDP,
@@ -305,6 +380,10 @@ p {
     font-size: 4vw;
   }
 
+  .labeOfGen {
+    margin-left: 0px;
+  }
+
   .sbros,
   #sbros,
   #calculate_ohm,
@@ -320,6 +399,12 @@ p {
     width: 80vw;
     font-size: 11vw;
   }
+}
+
+#freq,
+#amplitude {
+  width: 70vw;
+  margin-top: 6vh;
 }
 
 /*

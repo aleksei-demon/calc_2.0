@@ -66,8 +66,9 @@ const nav_configs = [
     { label: '&nbsp;ЧИСЛОБОГ', value: 'ЧИСЛОБОГ' },
     { label: '&nbsp;закон Ома', value: 'закон Ома' },
     { label: '&nbsp;&nbsp;Т. В. З.', value: 'Т. В. З.' },
-    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.', selected: true },
-    { label: '&nbsp;Корпус А.С.', value: 'Корпус А.С.' }
+    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.', },
+    { label: '&nbsp;генератор', value: 'генератор', selected: true },
+    { label: '&nbsp;Корпус А.С.', value: 'Корпус А.С.' },
 ];
 
 
@@ -111,13 +112,15 @@ function switchScreen(name) {
         "Т. В. З.": "body_trans",
         "К. Д. П.": "body_kdp",
         "Корпус А.С.": "body_spk",
-        "ЧИСЛОБОГ": "body_calc"
+        "ЧИСЛОБОГ": "body_calc",
+        "генератор": "body_sine",
     };
     document.body.className = themes[name] || 'body_calc';
     // Вызов отрисовки конкретного контента
     if (name === "закон Ома") draw_ohm('#app_content');
     if (name === "Т. В. З.") draw_TVZ('#app_content');
     if (name === "К. Д. П.") draw_KDP('#app_content');
+    if (name === "генератор") draw_sine('#app_content');
     if (name === "Корпус А.С.") draw_speaker('#app_content');
     if (name === "ЧИСЛОБОГ") draw_calc('#app_content');
     updateFavicon();
@@ -392,6 +395,52 @@ function draw_KDP(target) {
     targetEl.append(testSection, kdpSection, HelmholtzSection);
 }
 
+const sineFields = [
+    { id: 'freq_display', tag: 'output', label: 'частота&nbsp;&nbsp;', attr: { value: '0' } },
+    { id: 'freq', label: 'F', sub: 'Hz&nbsp;&nbsp;', type: 'range', attr: { type: 'range', min: '5', max: '300', value: '50', step: '1' }, },
+    { id: 'amplitude', label: 'amp&nbsp;', attr: { type: 'range', min: '0', max: '100', value: '50', step: '1' }, },
+];
+function draw_sine(target) {
+    for (all of document.querySelectorAll('option')) { all.className = 'body_sine'; }
+    const targetEl = document.querySelector(target);
+    clear(target);
+
+    const sineBlueprint = (item) => {
+        // 1. Определяем, является ли это слайдером
+        const isRange = item.attr && item.attr.type === 'range';
+
+        // 2. Определяем тег (по умолчанию input)
+        const tagName = item.tag || 'input';
+
+        // 3. Формируем классы динамически: 
+        // добавляем .custom-slider ТОЛЬКО если это range
+        const classes = `.inputs.sine${isRange ? '.custom-slider' : ''}`;
+        const selector = `${tagName}${classes}`;
+
+        // 4. Формируем ID для лейбла (безопасно)
+        const labelSelector = `label#${item.id}_.labeOfGen`;
+
+        return h(labelSelector, { innerHTML: item.label }, [
+            item.sub ? h('sub', { innerHTML: item.sub }) : null,
+
+            // 5. Создаем элемент с нужным селектором
+            h(selector, {
+                id: item.id,
+                attr: item.attr || {},
+                oninput: (e) => sineEngine(e.target.id)
+            })
+        ]);
+    };
+
+    const sineNodes = factory(sineFields, sineBlueprint);
+    const sineForm = h('form#sine-form', { onsubmit: e => e.preventDefault() }, [
+
+        ...sineNodes,// <--- ВОТ ЗДЕСЬ МАГИЯ (распаковка массива)
+        h('button#sbros', { className: 'inputs', innerText: 'П У С К', onclick: () => sineSwith() }),
+        h('p.explanation', { innerHTML: '- тон перестраиваемый по частоте для поиска резонансов помещения <br> <br> - розовый шум для оценки АЧХ' })
+    ]);
+    targetEl.append(sineForm);
+}
 
 //-------------------------------------------------------------------
 setTimeout(function () {
@@ -422,6 +471,15 @@ function updateFavicon() {
 
     // Отрисовка геометрии для каждой темы
     switch (bodyClass) {
+        case 'body_sine': // Генератор синуса (синусоида)
+            iconContent = `
+            <path d="M 10 50 C 25 10, 35 10, 50 50 S 75 90, 90 50" 
+            fill="none" 
+            stroke="currentColor" 
+            stroke-width="10" 
+            stroke-linecap="round" 
+            stroke-linejoin="round"/>`;
+            break;
         case 'body_ohms': // Закон Ома (символ круга разделенного на U, I, R)
             iconContent = `
             <path d="M 20 80 H 38 A 25 25 0 1 1 62 80 H 80"  fill="none" 
