@@ -586,6 +586,10 @@ let isPlaying = false;
 
 function sineSwith() {
     const btn = document.getElementById('sbros');
+    const display = document.getElementById('freq_display');
+    const freqInput = document.getElementById('freq');
+    // Обновляем текст частоты
+    if (display) display.innerText = freqInput.value + ' Hz';
 
     if (isPlaying) {
         // --- СТОП ---
@@ -625,11 +629,6 @@ function sineSwith() {
         oscillator.frequency.setValueAtTime(freqVal, audioCtx.currentTime);
         gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Начинаем с тишины
 
-        // Старая цепочка:
-        // oscillator.connect(gainNode);
-        // gainNode.connect(audioCtx.destination);
-
-        // Новая цепочка:
         oscillator.connect(gainNode);
         gainNode.connect(filterNode); // Gain идет в фильтр
         filterNode.connect(audioCtx.destination); // Фильтр идет в выход

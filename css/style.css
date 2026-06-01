@@ -241,6 +241,10 @@ option {
   transition: all 0.1s ease-out;
 }
 
+.sine {
+  color: #a78f7e;
+}
+
 #massage {
   color: #EBF2EA;
   padding: 1vh;
@@ -294,6 +298,7 @@ p {
   .inputs {
     width: 40vw;
     max-width: 500px;
+    font-weight: normal;
   }
 
   .TVZ::placeholder,
