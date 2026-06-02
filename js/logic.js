@@ -714,6 +714,7 @@ function createPinkNoiseBuffer(ctx) {
 function sineSwith() {
     const btn = document.getElementById('sbros');
     const isPinkNoise = document.getElementById('mode')?.checked;
+    document.getElementById('freq_display').innerText = document.getElementById('freq').value + ' Hz';
 
     if (isPlaying) {
         // --- СТОП ---
@@ -758,7 +759,7 @@ function sineSwith() {
             sourceNode.start();
 
             // Громкость
-            const masterGain = 0.25;
+            const masterGain = 0.15;
             const targetAmp = (document.getElementById('amplitude').value / 100) * masterGain;
             gainNode.gain.linearRampToValueAtTime(targetAmp, audioCtx.currentTime + 0.1);
 
@@ -805,6 +806,11 @@ function sineEngine(id) {
         sourceNode.frequency.setTargetAtTime(parseFloat(freqInput.value), now, 0.05);
     }
 }
+
+
+
+
+
 
 
 
