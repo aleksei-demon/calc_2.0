@@ -66,8 +66,8 @@ const nav_configs = [
     { label: '&nbsp;ЧИСЛОБОГ', value: 'ЧИСЛОБОГ' },
     { label: '&nbsp;закон Ома', value: 'закон Ома' },
     { label: '&nbsp;&nbsp;Т. В. З.', value: 'Т. В. З.' },
-    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.' },
-    { label: '&nbsp;генератор', value: 'генератор', selected: true },
+    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.', selected: true },
+    { label: '&nbsp;генератор', value: 'генератор' },
     { label: '&nbsp;Корпус А.С.', value: 'Корпус А.С.' },
 ];
 
